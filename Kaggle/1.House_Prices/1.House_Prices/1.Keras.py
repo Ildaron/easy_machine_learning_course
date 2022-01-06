@@ -71,7 +71,7 @@ model.compile(loss='mean_squared_error', metrics=['acc'], optimizer=keras.optimi
 
 #3.3 Train
 #early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=50)
-hist = model.fit (x_train, y_train,  batch_size = 32 , epochs = 100)
+hist = model.fit (x_train, y_train,  batch_size = 32 , epochs = 100) #history = m
 #model.fit(validation_split=0.1)
 #3.4 Evaluate the model
 
@@ -85,3 +85,7 @@ plt.ylabel('Loss')
 plt.xlabel('acc')
 plt.legend(['Loss', 'acc'], loc='upper right')
 plt.show()
+
+model.predict(x_test)
+              
+              
