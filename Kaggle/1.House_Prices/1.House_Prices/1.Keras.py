@@ -60,7 +60,7 @@ model.add(Dense(200, input_dim=78, kernel_initializer='normal', activation='relu
 model.add(Dense(100, kernel_initializer='normal', activation='relu'))
 model.add(Dense(50, kernel_initializer='normal', activation='relu'))
 model.add(Dense(25, kernel_initializer='normal', activation='relu'))
-model.add(Dense(1, kernel_initializer='normal')) #activation='softmax'
+model.add(Dense(1, kernel_initializer='normal')) #activation='softmax'   activation='sigmoid'
 model.summary()
 
 #visualizer(model, format='png', view=True)
