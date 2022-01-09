@@ -10,44 +10,62 @@ from keras.models import Sequential
 
 #1. Data prepairing
 data_train = pd.read_csv('train.csv')
-data_test = pd.read_csv('test.csv')
-data_train=data_train.fillna('0')
+samples_to_predict = pd.read_csv('test.csv')
+l=list(range(0,1459)) 
+samples_to_predict["C"]= l
 
-data_train_col=data_train.values
-col_len=(len(data_train_col[0]))
-count=0
-col=[]
 
-for a in range(0,col_len,1):
- type_collom=type(data_train_col[0,a])
- if  (type_collom == str):  # de
-  col=np.append(col, int(count))
- count=count+1
 
-col = list(map(int, col))
-col_re = list(data_train.columns.values)
+def data_all (data_train):
+ data_train=data_train.fillna('0')
+ data_train_col=data_train.values
+ col_len=(len(data_train_col[0]))
+ count=0
+ col=[]
 
-name= []
-for a in col:
- name.append(col_re[a])
+ for a in range(0,col_len,1):
+  type_collom=type(data_train_col[0,a])
+  if  (type_collom == str):  # de
+   col=np.append(col, int(count))
+  count=count+1
 
-for a in name:
- all_names = set(data_train[a]) # replace N/A by A
- unique = {k: i for i, k in enumerate(all_names)} # create unique names for replace str 
- data_train[a] = data_train[a].map(unique)
+ col = list(map(int, col))
+ col_re = list(data_train.columns.values)
 
-data_train=data_train.values
-x = data_train[:,1:79]
-y = data_train[:,80]
+ name= []
+ for a in col:
+  name.append(col_re[a])
 
-x = x.astype(int)
-y = y.astype(int)
+ for a in name:
+  all_names = set(data_train[a]) # replace N/A by A
+  unique = {k: i for i, k in enumerate(all_names)} # create unique names for replace str 
+  data_train[a] = data_train[a].map(unique)
+
+ data_train=data_train.values
+ x = data_train[:,1:79]
+ y = data_train[:,80]
+
+ x = x.astype(int)
+ y = y.astype(int)
+ dataset = dict()
+ dataset["x"]=x
+ dataset["y"]=y
+ return dataset
+
+data=data_all(data_train)
+x=data["x"]
+y=data["y"]
+
+data_test=data_all(samples_to_predict)
+data_test_x=data_test["x"]
+print (data_test_x)
 
 #2. Data processing
 from sklearn import preprocessing
 min_max_scaler = preprocessing.MinMaxScaler()
-x = min_max_scaler.fit_transform(x)
 
+
+x = min_max_scaler.fit_transform(x)
 y= y.reshape(-1, 1)
 y = min_max_scaler.fit_transform (y)
 
@@ -73,13 +91,22 @@ model.compile(optimizer='rmsprop', loss='mse', metrics=['mae'])
 
 #3.3 Train
 #early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=50)
-hist = model.fit (x_train, y_train,  batch_size = 32 , epochs = 100) #history = m
+hist = model.fit (x_train, y_train,  batch_size = 32 , epochs = 10000) #history = m
+
 #model.fit(validation_split=0.1)
 #3.4 Evaluate the model
-
 test_mse_score, test_mae_score = (model.evaluate (x_test, y_test))
-print (test_mse_score)
-print (test_mae_score)
+
+
+predictions = model.predict(data_test_x)
+print (type(predictions))
+
+dframe = pd.DataFrame(predictions) 
+
+dframe.to_excel('./teams.xlsx')
+
+#print (test_mse_score)
+#print (test_mae_score)
 import matplotlib.pyplot as plt
 #plt.plot(hist.history['loss'])
 plt.plot(hist.history['mae'])
