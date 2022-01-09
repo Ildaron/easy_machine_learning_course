@@ -6,7 +6,7 @@ import tensorflow as tf
 from keras.layers import Dense
 from keras.wrappers.scikit_learn import KerasRegressor
 from keras.models import Sequential
-from keras_visualizer import visualizer 
+#from keras_visualizer import visualizer 
 
 #1. Data prepairing
 data_train = pd.read_csv('train.csv')
@@ -66,7 +66,9 @@ model.summary()
 #visualizer(model, format='png', view=True)
 
 #3.2 Compile
-model.compile(loss='mean_squared_error', metrics=['acc'], optimizer=keras.optimizers.Adadelta())
+#model.compile(loss='mean_squared_error', metrics=['acc'], optimizer=keras.optimizers.Adadelta())
+model.compile(optimizer='rmsprop', loss='mse', metrics=['mae'])
+
 #model.compile(optimizer=tf.train.AdamOptimizer(),loss='mse', metrics=['acc'])
 
 #3.3 Train
@@ -75,17 +77,16 @@ hist = model.fit (x_train, y_train,  batch_size = 32 , epochs = 100) #history = 
 #model.fit(validation_split=0.1)
 #3.4 Evaluate the model
 
-print (model.evaluate (x_test, y_test))
-
+test_mse_score, test_mae_score = (model.evaluate (x_test, y_test))
+print (test_mse_score)
+print (test_mae_score)
 import matplotlib.pyplot as plt
-plt.plot(hist.history['loss'])
-plt.plot(hist.history['acc'])
+#plt.plot(hist.history['loss'])
+plt.plot(hist.history['mae'])
 plt.title('Model loss')
-plt.ylabel('Loss')
-plt.xlabel('acc')
+plt.ylabel('mae')
+plt.xlabel('epoch')
 plt.legend(['Loss', 'acc'], loc='upper right')
 plt.show()
 
 model.predict(x_test)
-              
-              
