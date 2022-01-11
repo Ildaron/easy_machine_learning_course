@@ -1,3 +1,4 @@
+
 import keras
 import pandas as pd
 import numpy as np
@@ -6,7 +7,7 @@ import tensorflow as tf
 from keras.layers import Dense
 from keras.wrappers.scikit_learn import KerasRegressor
 from keras.models import Sequential
-#from keras_visualizer import visualizer 
+#from keras_visualizer import visualizer
 from sklearn.metrics import mean_squared_log_error as msle, mean_squared_error as mse, make_scorer
 
 #1. Data prepairing
@@ -57,12 +58,13 @@ y=data["y"]
 
 data_test=data_all(samples_to_predict)
 data_test_x=data_test["x"]
-print (data_test_x)
 
 #2. Data processing
 from sklearn import preprocessing
 min_max_scaler = preprocessing.MinMaxScaler()
 
+
+data_test_x = min_max_scaler.fit_transform(data_test_x)
 
 x = min_max_scaler.fit_transform(x)
 y= y.reshape(-1, 1)
@@ -90,30 +92,32 @@ model.compile(optimizer='rmsprop', loss='mse', metrics=['mae']) # metrics=['mae'
 
 #3.3 Train
 #early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=50)
-hist = model.fit (x_train, y_train,  batch_size = 32 , epochs = 100) #history = m
+hist = model.fit (x_train, y_train,  batch_size = 32 , epochs = 10000) #history = m
 
 #model.fit(validation_split=0.1)
 #3.4 Evaluate the model
 test_mse_score, test_mae_score = (model.evaluate (x_test, y_test))
 
 
-predictions = model.predict(data_test_x)
-dframe = pd.DataFrame(predictions) 
+predictions_test = model.predict(data_test_x)
+predictions = model.predict(x_test)
+predictions_test = min_max_scaler.inverse_transform(predictions_test)
+
+dframe = pd.DataFrame(predictions_test) 
 dframe.to_excel('./teams.xlsx')
 
-predictions = model.predict(x_test)
+
 print("loni", tf.keras.metrics.mean_squared_logarithmic_error(y_test, predictions))
 print ("msle", msle(predictions, y_test))
 
 #print (test_mse_score)
 #print (test_mae_score)
 import matplotlib.pyplot as plt
-#plt.plot(hist.history['loss'])
-plt.plot(hist.history['mae'])
+plt.plot(hist.history['loss'])
+#plt.plot(hist.history['mae'])
 plt.title('Model loss')
 plt.ylabel('mae')
 plt.xlabel('epoch')
 plt.legend(['Loss', 'acc'], loc='upper right')
 plt.show()
 
-model.predict(x_test)
