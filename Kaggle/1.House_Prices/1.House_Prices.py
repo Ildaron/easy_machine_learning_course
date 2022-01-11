@@ -1,4 +1,7 @@
 
+
+#GRAPT - ACTUAL AND PREDICTED
+
 import keras
 import pandas as pd
 import numpy as np
@@ -70,7 +73,7 @@ x = min_max_scaler.fit_transform(x)
 y= y.reshape(-1, 1)
 y = min_max_scaler.fit_transform (y)
 
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.4, random_state=42)
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
 
 #3. Model
 #3.1 Create model
@@ -81,23 +84,34 @@ model.add(Dense(50, kernel_initializer='normal', activation='relu'))
 model.add(Dense(25, kernel_initializer='normal', activation='relu')) #activation='softmax'   activation='sigmoid'
 model.add(Dense(1, kernel_initializer='normal')) 
 model.summary()
-
 #visualizer(model, format='png', view=True)
 
 #3.2 Compile
 #model.compile(loss='mean_squared_error', metrics=['acc'], optimizer=keras.optimizers.Adadelta())
-model.compile(optimizer='rmsprop', loss='mse', metrics=['mae']) # metrics=['mae']
 
-#model.compile(optimizer=tf.train.AdamOptimizer(),loss='mse', metrics=['acc'])
+model.compile(optimizer='rmsprop', loss='mse', metrics=['accuracy']) # metrics=['mae']   #model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])   - Метрика accuracy предназначена для задачи классификации,
+#optimizer
+    #rmsprop
+    #SGD
+    #RMSprop
+    #Adam
+    #Adadelta
+    #Adagrad
+    #Adamax
+    #Nadam
+    #Ftrl
+#from keras.optimizers import SGD
+#opt = SGD(lr=0.01)
+#opr
 
 #3.3 Train
 #early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=50)
-hist = model.fit (x_train, y_train,  batch_size = 32 , epochs = 10000) #history = m
+hist = model.fit (x_train, y_train,  batch_size = 32, epochs = 100)
+#model.fit(X_train, y_train, batch_size = batch_size, nb_epoch = nb_epochs, show_accuracy = True, verbose = 2, validation_data = (X_test, y_test), class_weight=classWeight)
 
 #model.fit(validation_split=0.1)
 #3.4 Evaluate the model
 test_mse_score, test_mae_score = (model.evaluate (x_test, y_test))
-
 
 predictions_test = model.predict(data_test_x)
 predictions = model.predict(x_test)
@@ -106,7 +120,6 @@ predictions_test = min_max_scaler.inverse_transform(predictions_test)
 dframe = pd.DataFrame(predictions_test) 
 dframe.to_excel('./teams.xlsx')
 
-
 print("loni", tf.keras.metrics.mean_squared_logarithmic_error(y_test, predictions))
 print ("msle", msle(predictions, y_test))
 
@@ -114,10 +127,9 @@ print ("msle", msle(predictions, y_test))
 #print (test_mae_score)
 import matplotlib.pyplot as plt
 plt.plot(hist.history['loss'])
-#plt.plot(hist.history['mae'])
+plt.plot(hist.history['accuracy'])
 plt.title('Model loss')
 plt.ylabel('mae')
 plt.xlabel('epoch')
 plt.legend(['Loss', 'acc'], loc='upper right')
 plt.show()
-
