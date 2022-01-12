@@ -1,5 +1,3 @@
-
-
 #GRAPT - ACTUAL AND PREDICTED
 
 import keras
@@ -73,7 +71,7 @@ x = min_max_scaler.fit_transform(x)
 y= y.reshape(-1, 1)
 y = min_max_scaler.fit_transform (y)
 
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.5, random_state=42)
 
 #3. Model
 #3.1 Create model
@@ -87,10 +85,9 @@ model.summary()
 #visualizer(model, format='png', view=True)
 
 #3.2 Compile
-#model.compile(loss='mean_squared_error', metrics=['acc'], optimizer=keras.optimizers.Adadelta())
-
-model.compile(optimizer='rmsprop', loss='mse', metrics=['accuracy']) # metrics=['mae']   #model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])   - Метрика accuracy предназначена для задачи классификации,
-#optimizer
+model.compile(optimizer='rmsprop', loss='mse',metrics=['mean_squared_logarithmic_error','mean_absolute_error', 'mean_absolute_percentage_error','mean_squared_error','mean_absolute_percentage_error', 'cosine_proximity']) # metrics=['acc'],   metrics=['mean_absolute_error']  #model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])   - Метрика accuracy предназначена для задачи классификации,
+                                                      #   'cosine_proximity'
+    #optimizer
     #rmsprop
     #SGD
     #RMSprop
@@ -100,18 +97,18 @@ model.compile(optimizer='rmsprop', loss='mse', metrics=['accuracy']) # metrics=[
     #Adamax
     #Nadam
     #Ftrl
-#from keras.optimizers import SGD
-#opt = SGD(lr=0.01)
-#opr
 
 #3.3 Train
 #early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=50)
-hist = model.fit (x_train, y_train,  batch_size = 32, epochs = 100)
+
+hist = model.fit (x_train, y_train,  batch_size = 32, epochs = 1000)
 #model.fit(X_train, y_train, batch_size = batch_size, nb_epoch = nb_epochs, show_accuracy = True, verbose = 2, validation_data = (X_test, y_test), class_weight=classWeight)
+
 
 #model.fit(validation_split=0.1)
 #3.4 Evaluate the model
-test_mse_score, test_mae_score = (model.evaluate (x_test, y_test))
+
+#test_mse_score, test_mae_score = (model.evaluate (x_test, y_test))
 
 predictions_test = model.predict(data_test_x)
 predictions = model.predict(x_test)
@@ -125,11 +122,31 @@ print ("msle", msle(predictions, y_test))
 
 #print (test_mse_score)
 #print (test_mae_score)
+
+
 import matplotlib.pyplot as plt
-plt.plot(hist.history['loss'])
-plt.plot(hist.history['accuracy'])
-plt.title('Model loss')
-plt.ylabel('mae')
-plt.xlabel('epoch')
-plt.legend(['Loss', 'acc'], loc='upper right')
+
+figure, axis = plt.subplots(2, 1)
+plt.subplots_adjust(hspace=1)
+
+axis[0].plot(hist.history['loss'])
+axis[0].plot(hist.history['mean_squared_logarithmic_error'])  #metrics=['mean_absolute_error']
+axis[0].plot(hist.history['mean_absolute_error'])
+axis[0].plot(hist.history['mean_squared_error'])
+#axis[0].plot(hist.history['cosine_proximity'])
+
+axis[1].plot(hist.history['mean_absolute_percentage_error'])
+axis[1].plot(hist.history['mean_absolute_percentage_error'])
+
+axis[0].set_xlabel('epoch')
+axis[0].set_ylabel('Error')
+axis[0].legend(['mean_squared_logarithmic_error','mean_absolute_error','mean_absolute_percentage_error','mean_squared_error', 'cosine_proximity'], loc='upper right')
+
+#plt.title('Model loss')
+
+axis[1].set_xlabel('epoch')
+axis[1].set_ylabel('Error')
+axis[1].legend(['mean_absolute_error','mean_absolute_percentage_error'], loc='upper right')
+
 plt.show()
+
