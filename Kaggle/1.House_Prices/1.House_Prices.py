@@ -2,6 +2,7 @@
 # try  Gradient Boosting Regressor # Random Forest Regressor # Ridge regression (L2) # Lasso regression (L1)
 # feature selection methods
 # one shoot
+# Hyperparamater Hyperparamater 
 import keras
 import pandas as pd
 import numpy as np
