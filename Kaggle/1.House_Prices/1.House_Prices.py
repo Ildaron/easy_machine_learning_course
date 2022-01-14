@@ -1,8 +1,8 @@
 # GRAPT - ACTUAL AND PREDICTED
 # try  Gradient Boosting Regressor # Random Forest Regressor # Ridge regression (L2) # Lasso regression (L1)
 # feature selection methods
-# one shoot
-# Hyperparamater  RandomSearch и GridSearch подбор гиперпараметров с помощью перекрёстной проверки
+# Feature Engineering
+
 import keras
 import pandas as pd
 import numpy as np
@@ -97,30 +97,37 @@ x = scaler_x.fit_transform(x)
 y = scaler_y.fit_transform(y)
 data_test_x = data_test_x_scaler.fit_transform(data_test_x)
 
-
-
-
 #2.4 Split data and Recursive Feature Elimination
 x_train, x_test, y_train, y_test = train_test_split(x, y.ravel(), test_size=0.01, random_state=42)
-
 
 from sklearn.ensemble import GradientBoostingRegressor,RandomForestRegressor
 from sklearn.feature_selection import SelectKBest,f_regression,RFECV
 
-
-mdl7 = GradientBoostingRegressor(n_estimators = 100)
+mdl7 = GradientBoostingRegressor(n_estimators = 150)
 rfecv = RFECV(estimator=mdl7, step=1, cv=5,scoring='neg_mean_squared_error')  
 rfecv = rfecv.fit(x, y.ravel())
 
 print('Optimal number of features :', rfecv.n_features_)
-print('Best features :',rfecv.support_)    # 34
+print('Best features :',rfecv.support_)    
+col_false=rfecv.support_
+b=0
+c=[]
+
+for a in col_false:
+ b=b+1 
+ if (str(a)=="False"):        
+  c.append(b-1)
+
+x_train = np.delete(x_train, c, 1)
+x_test =  np.delete(x_test, c, 1)
+data_test_x = np.delete(data_test_x, c, 1)
 
 # Plot number of features VS. cross-validation scores
 plt.figure()
 plt.xlabel("Number of features selected")
 plt.ylabel("Cross validation score of number of selected features")
 plt.plot(range(1, len(rfecv.grid_scores_) + 1), rfecv.grid_scores_)
-plt.show()
+#plt.show()
 
 
 from sklearn.pipeline import Pipeline
@@ -131,12 +138,10 @@ import numpy as np
 from sklearn.ensemble import GradientBoostingClassifier
 
 
-
-
 #3. Model
 #3.1 Create model
 model = Sequential()
-model.add(Dense(200, input_dim=78, kernel_initializer='normal', activation='relu')) # input_dim=78,
+model.add(Dense(200, input_dim=x_train.shape[1], kernel_initializer='normal', activation='relu')) 
 model.add(Dense(100, kernel_initializer='normal', activation='relu'))
 model.add(Dense(50, kernel_initializer='normal', activation='relu'))
 model.add(Dense(25, kernel_initializer='normal', activation='relu')) #activation='softmax'   activation='sigmoid'
@@ -161,7 +166,7 @@ model.compile(optimizer='rmsprop', loss='mse',metrics=['mean_squared_logarithmic
 #3.3 Train
 #early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=50)
 
-hist = model.fit (x_train, y_train,  batch_size = 32, epochs = 500)
+hist = model.fit (x_train, y_train,  batch_size = 32, epochs = 1000)
 #model.fit(X_train, y_train, batch_size = batch_size, nb_epoch = nb_epochs, show_accuracy = True, verbose = 2, validation_data = (X_test, y_test), class_weight=classWeight)
 
 
