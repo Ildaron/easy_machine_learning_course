@@ -1,4 +1,5 @@
 # hyperparameter
+#Dropout
 # GRAPT - ACTUAL AND PREDICTED
 # try  Gradient Boosting Regressor # Random Forest Regressor # Ridge regression (L2) # Lasso regression (L1)
 # feature selection methods
