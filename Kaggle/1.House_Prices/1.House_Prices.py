@@ -1,4 +1,4 @@
-# hyperparameter
+# hyperparameter batch_size = {{choice ([32, 64, 128])}}
 #Dropout
 # GRAPT - ACTUAL AND PREDICTED
 # try  Gradient Boosting Regressor # Random Forest Regressor # Ridge regression (L2) # Lasso regression (L1)
