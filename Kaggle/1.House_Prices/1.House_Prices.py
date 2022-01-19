@@ -1,9 +1,15 @@
-# hyperparameter batch_size = {{choice ([32, 64, 128])}} Grid search и Random search.
-#Dropout
+# вычисляется функция потерь на мини-пакете данных и затем используется алгоритм обратного распространения ошибки для смещения весов в нужном направлении
+# hyperparameter batch_size = {{choice ([32, 64, 128])}}  Grid search и Random search.
+#Dropou tflatten 
+# шаг градиентного спуска,
+# penalty
 # GRAPT - ACTUAL AND PREDICTED
 # try  Gradient Boosting Regressor # Random Forest Regressor # Ridge regression (L2) # Lasso regression (L1)
 # feature selection methods
 # Feature Engineering
+
+
+import keras_tuner as kt
 
 import keras
 import pandas as pd
@@ -17,6 +23,9 @@ from keras.models import Sequential
 from sklearn.metrics import mean_squared_log_error as msle, mean_squared_error as mse, make_scorer
 import matplotlib.pyplot as plt
 print ("library is ok")
+
+
+
 
 #1. Data prepairing
 data_train = pd.read_csv('train.csv')
@@ -99,36 +108,54 @@ x = scaler_x.fit_transform(x)
 y = scaler_y.fit_transform(y)
 data_test_x = data_test_x_scaler.fit_transform(data_test_x)
 
-#2.4 Split data and Recursive Feature Elimination
+#2.4 Split data 
 x_train, x_test, y_train, y_test = train_test_split(x, y.ravel(), test_size=0.01, random_state=42)
 
-from sklearn.ensemble import GradientBoostingRegressor,RandomForestRegressor
-from sklearn.feature_selection import SelectKBest,f_regression,RFECV
 
-mdl7 = GradientBoostingRegressor(n_estimators = 150)
-rfecv = RFECV(estimator=mdl7, step=1, cv=5,scoring='neg_mean_squared_error')  
-rfecv = rfecv.fit(x, y.ravel())
+#2.4.1 Save prepared dataset 
+#x_train_after_compil = pd.DataFrame(x_train)
+#x_test_after_compil = pd.DataFrame(x_test)
+#y_train_after_compil = pd.DataFrame(y_train)
+#y_test_after_compil = pd.DataFrame(y_test)
 
-print('Optimal number of features :', rfecv.n_features_)
-print('Best features :',rfecv.support_)    
-col_false=rfecv.support_
-b=0
-c=[]
+#x_train_after_compil.to_excel('./x_train_after_compil.xlsx')
+#x_test_after_compil.to_excel('./x_test_after_compil.xlsx')
+#y_train_after_compil.to_excel('./y_train_after_compil.xlsx')
+#y_test_after_compil.to_excel('./y_test_after_compil.xlsx')
 
-for a in col_false:
- b=b+1 
- if (str(a)=="False"):        
-  c.append(b-1)
 
+
+
+#2.4.2 Recursive Feature Elimination
+
+#from sklearn.ensemble import GradientBoostingRegressor,RandomForestRegressor
+#from sklearn.feature_selection import SelectKBest,f_regression,RFECV
+
+#mdl7 = GradientBoostingRegressor(n_estimators = 150)
+#rfecv = RFECV(estimator=mdl7, step=1, cv=5,scoring='neg_mean_squared_error')  
+#rfecv = rfecv.fit(x, y.ravel())
+
+#print('Optimal number of features :', rfecv.n_features_)
+#print('Best features :',rfecv.support_)    
+#col_false=rfecv.support_
+#b=0
+#c=[]
+
+#for a in col_false:
+# b=b+1 
+# if (str(a)=="False"):        
+#  c.append(b-1)
+
+c = [0, 4, 5, 6, 7, 8, 10, 13, 14, 15, 20, 21, 23, 24, 26, 27, 28, 30, 32, 34, 38, 39, 41, 44, 47, 56, 62, 63, 64, 67, 68, 70, 72, 73, 74, 75, 76]
 x_train = np.delete(x_train, c, 1)
 x_test =  np.delete(x_test, c, 1)
 data_test_x = np.delete(data_test_x, c, 1)
 
 # Plot number of features VS. cross-validation scores
-plt.figure()
-plt.xlabel("Number of features selected")
-plt.ylabel("Cross validation score of number of selected features")
-plt.plot(range(1, len(rfecv.grid_scores_) + 1), rfecv.grid_scores_)
+#plt.figure()
+#plt.xlabel("Number of features selected")
+#plt.ylabel("Cross validation score of number of selected features")
+#plt.plot(range(1, len(rfecv.grid_scores_) + 1), rfecv.grid_scores_)
 #plt.show()
 
 
@@ -151,9 +178,26 @@ model.add(Dense(1, kernel_initializer='normal'))
 model.summary()
 #visualizer(model, format='png', view=True)
 
-#3.2 Compile
+
+
+
+
+
+
+#3.2 Hyper parameters
+print ("before hyper")
+tuner_search= kt.RandomSearch(models, objective='val_accuracy', max_trials=5) #,directory='tune',project_name="cnn model tunning"
+print ("before hyper1")
+tuner_search.search(x_train,y_train,epochs=5,validation_split=0.1)
+print ("before hyper2")
+model=tuner_search.get_best_models()[0]
+print ("before hyper3")
+print (model)
+
+
+#3.3 Compile
 model.compile(optimizer='rmsprop', loss='mse',metrics=['mean_squared_logarithmic_error','mean_absolute_error', 'mean_absolute_percentage_error','mean_squared_error','mean_absolute_percentage_error', 'cosine_proximity']) # metrics=['acc'],   metrics=['mean_absolute_error']  #model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])   - Метрика accuracy предназначена для задачи классификации,
-                                                      #   'cosine_proximity'
+
     #optimizer
     #rmsprop
     #SGD
@@ -165,23 +209,22 @@ model.compile(optimizer='rmsprop', loss='mse',metrics=['mean_squared_logarithmic
     #Nadam
     #Ftrl
 
-#3.3 Train
+#3.4 Train
 #early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=50)
 
-hist = model.fit (x_train, y_train,  batch_size = 32, epochs = 1000)
+hist = model.fit (x_train, y_train,  batch_size = 32, epochs = 1)
 #model.fit(X_train, y_train, batch_size = batch_size, nb_epoch = nb_epochs, show_accuracy = True, verbose = 2, validation_data = (X_test, y_test), class_weight=classWeight)
 
 
 #model.fit(validation_split=0.1)
 
-#3.4 Evaluate the model
+#3.5 Evaluate the model
 #test_mse_score, test_mae_score = (model.evaluate (x_test, y_test))
 
 predictions_test = model.predict(data_test_x)
 predictions = model.predict(x_test)
 
-#3.5 Inverse y data
-
+#3.6 Inverse y data
 #predictions_test = min_max_scaler.inverse_transform(predictions_test)
 
 predictions_test = scaler_y.inverse_transform(predictions_test)
