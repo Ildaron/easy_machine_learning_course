@@ -30,8 +30,8 @@ from tensorflow.keras import layers
 def build_model(hp):        
  model = Sequential()
     #model.add(layers.Flatten())
- for i in range(hp.Int("num_layers", 1, 3)):
-  model.add( layers.Dense(units=hp.Int(f"units_{i}", min_value=32, max_value=96, step=32), activation=hp.Choice("activation", ["relu", "tanh"]),)) #512
+ for i in range(hp.Int("num_layers", 1, 30)):
+  model.add( layers.Dense(units=hp.Int(f"units_{i}", min_value=32, max_value=512, step=16), activation=hp.Choice("activation", ["relu", "tanh"]),)) #512
   if hp.Boolean("dropout"):
    model.add(layers.Dropout(rate=0.25))
  model.add(Dense(1, kernel_initializer='normal')) 
@@ -55,15 +55,10 @@ tuner.results_summary()
 
 models = tuner.get_best_models(num_models=2)
 best_model = models[0]
-print (best_model)
 
-# Build the model.
-# Needed for `Sequential` without specified `input_shape`.
-print ("x_test", x_train)
-print ("rons", x_train[0].shape)
-best_model.build(input_shape=(0,78,0))  #0, 78, 1  # None, 78  # None, (78,)))
+best_model.build(input_shape=(None, 1,78))  #0, 78, 1  # None, 78  # None, (78,)))
 best_model.summary()
-tuner.results_summary()
+#tuner.results_summary()
 
 
 
