@@ -1,31 +1,29 @@
+# CatBoost и XGBoost,
 # вычисляется функция потерь на мини-пакете данных и затем используется алгоритм обратного распространения ошибки для смещения весов в нужном направлении
 # hyperparameter batch_size = {{choice ([32, 64, 128])}}  Grid search и Random search.
-#Dropou tflatten 
+# Dropou tflatten 
 # шаг градиентного спуска,
 # penalty
 # GRAPT - ACTUAL AND PREDICTED
 # try  Gradient Boosting Regressor # Random Forest Regressor # Ridge regression (L2) # Lasso regression (L1)
 # feature selection methods
 # Feature Engineering
-#  LeakyReLU
+# !! from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
+from keras import regularizers
 import keras_tuner as kt
-
 import keras
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
-from keras.layers import Dense
+from keras.layers import Dense,Dropout
 from keras.wrappers.scikit_learn import KerasRegressor
 from keras.models import Sequential
 #from keras_visualizer import visualizer
 from sklearn.metrics import mean_squared_log_error as msle, mean_squared_error as mse, make_scorer
 import matplotlib.pyplot as plt
 print ("library is ok")
-
-
-
 
 #1. Data prepairing
 data_train = pd.read_csv('train.csv')
@@ -75,7 +73,7 @@ y=data["y"]
 
 data_test=data_all(samples_to_predict)
 data_test_x=data_test["x"]
-
+ds=data_test_x
 #2. Data processing 
 #2.1 MinMaxScaler
 from sklearn import preprocessing
@@ -86,7 +84,6 @@ min_max_scaler = preprocessing.MinMaxScaler()
 #x = min_max_scaler.fit_transform(x)
 #y= y.reshape(-1, 1)
 #y = min_max_scaler.fit_transform (y)
-
 
 #2.2 Normalization
 
@@ -104,12 +101,15 @@ y= y.reshape(-1, 1)
 scaler_y = StandardScaler().fit(y)
 data_test_x_scaler = StandardScaler().fit(data_test_x )
 
+xum=x
+yum=y
+
 x = scaler_x.fit_transform(x)
 y = scaler_y.fit_transform(y)
 data_test_x = data_test_x_scaler.fit_transform(data_test_x)
 
 #2.4 Split data 
-x_train, x_test, y_train, y_test = train_test_split(x, y.ravel(), test_size=0.01, random_state=42)
+x_train, x_test, y_train, y_test = train_test_split(x, y.ravel(), test_size=0.0001, random_state=42)
 
 
 #2.4.1 Save prepared dataset 
@@ -124,12 +124,10 @@ x_train, x_test, y_train, y_test = train_test_split(x, y.ravel(), test_size=0.01
 #y_test_after_compil.to_excel('./y_test_after_compil.xlsx')
 
 
-
-
 #2.4.2 Recursive Feature Elimination
 
-#from sklearn.ensemble import GradientBoostingRegressor,RandomForestRegressor
-#from sklearn.feature_selection import SelectKBest,f_regression,RFECV
+from sklearn.ensemble import GradientBoostingRegressor,RandomForestRegressor
+from sklearn.feature_selection import SelectKBest,f_regression,RFECV
 
 #mdl7 = GradientBoostingRegressor(n_estimators = 150)
 #rfecv = RFECV(estimator=mdl7, step=1, cv=5,scoring='neg_mean_squared_error')  
@@ -158,14 +156,12 @@ data_test_x = np.delete(data_test_x, c, 1)
 #plt.plot(range(1, len(rfecv.grid_scores_) + 1), rfecv.grid_scores_)
 #plt.show()
 
-
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.model_selection import cross_val_score
 from sklearn.feature_selection import RFE
 import numpy as np
 from sklearn.ensemble import GradientBoostingClassifier
-
 
 #3. Model
 #3.1 Create model
@@ -176,27 +172,9 @@ model.add(Dense(50, kernel_initializer='normal', activation='relu'))
 model.add(Dense(25, kernel_initializer='normal', activation='relu')) #activation='softmax'   activation='sigmoid'
 model.add(Dense(1, kernel_initializer='normal')) 
 model.summary()
-#visualizer(model, format='png', view=True)
-
-
-
-
-
-
-
-#3.2 Hyper parameters
-print ("before hyper")
-tuner_search= kt.RandomSearch(models, objective='val_accuracy', max_trials=5) #,directory='tune',project_name="cnn model tunning"
-print ("before hyper1")
-tuner_search.search(x_train,y_train,epochs=5,validation_split=0.1)
-print ("before hyper2")
-model=tuner_search.get_best_models()[0]
-print ("before hyper3")
-print (model)
-
 
 #3.3 Compile
-model.compile(optimizer='rmsprop', loss='mse',metrics=['mean_squared_logarithmic_error','mean_absolute_error', 'mean_absolute_percentage_error','mean_squared_error','mean_absolute_percentage_error', 'cosine_proximity']) # metrics=['acc'],   metrics=['mean_absolute_error']  #model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])   - Метрика accuracy предназначена для задачи классификации,
+model.compile(optimizer='rmsprop', loss='mse',metrics=['mean_squared_logarithmic_error']) # metrics=['acc'],   metrics=['mean_absolute_error']  #model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])   - Метрика accuracy предназначена для задачи классификации,
 
     #optimizer
     #rmsprop
@@ -212,50 +190,87 @@ model.compile(optimizer='rmsprop', loss='mse',metrics=['mean_squared_logarithmic
 #3.4 Train
 #early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=50)
 
-hist = model.fit (x_train, y_train,  batch_size = 32, epochs = 1)
+callback = tf.keras.callbacks.EarlyStopping(monitor='mean_squared_logarithmic_error', patience=15)  # val_loss  loss
+
+hist = model.fit (x_train, y_train,  batch_size = 32, callbacks=[callback], epochs = 1)
 #model.fit(X_train, y_train, batch_size = batch_size, nb_epoch = nb_epochs, show_accuracy = True, verbose = 2, validation_data = (X_test, y_test), class_weight=classWeight)
-
-
 #model.fit(validation_split=0.1)
 
 #3.5 Evaluate the model
 #test_mse_score, test_mae_score = (model.evaluate (x_test, y_test))
 
 predictions_test = model.predict(data_test_x)
-predictions = model.predict(x_test)
+#predictions = model.predict(x_test)
 
 #3.6 Inverse y data
 #predictions_test = min_max_scaler.inverse_transform(predictions_test)
 
 predictions_test = scaler_y.inverse_transform(predictions_test)
-dframe = pd.DataFrame(predictions_test) 
-dframe.to_excel('./teams.xlsx')
+dframe = pd.DataFrame(predictions_test)
 
+
+#4 Machine learning methods
+from sklearn.ensemble import GradientBoostingRegressor,RandomForestRegressor
+from sklearn.metrics import mean_squared_error
+#4.1 Gradient Boosting Regressor 
+#4.1.1 Raw data
+mdl1 = GradientBoostingRegressor(n_estimators = 100)
+mdl1.fit(xum,yum)
+p = mdl1.predict(ds)
+#predictions_test = scaler_y.inverse_transform(p)
+dframe = pd.DataFrame(p)
+print (p)
+# print((mean_squared_error(y_test, p))**0.5)
+
+select_feature = SelectKBest(f_regression, k=30).fit(xum, yum)
+x_train2 = select_feature.transform(xum)
+x_test2 = select_feature.transform(ds)
+
+mdl6 = GradientBoostingRegressor(n_estimators = 1000,random_state=42)
+mdl6.fit(x_train2,yum)
+#p = mdl6.predict(x_test2)
+#print ("GradientBoostingRegressor", p)
+
+#https://www.kaggle.com/brunovpm/recursive-feature-elimination-house-prices
+
+#4.1.2 Prepared data
+
+select_feature = SelectKBest(f_regression, k= 30).fit(x_train, y_train)
+x_train2 = select_feature.transform(x_train)
+x_test2 = select_feature.transform(data_test_x)
+
+mdl6 = GradientBoostingRegressor(n_estimators = 1000,random_state=42)
+mdl6.fit(x_train2,y_train)
+p = mdl6.predict(x_test2)
+p = scaler_y.inverse_transform(p)
+print ("GradientBoostingRegressor", p)
+
+#4.2 Random Forest Regressor
+#4.3 Ridge regression (L2)
+#4.4 Lasso regression (L1)
+#4.5 Elastic Net regression
+
+dframe.to_excel('./teams.xlsx')
 #print("loni", tf.keras.metrics.mean_squared_logarithmic_error(y_test, predictions))
 #print ("msle", msle(predictions, y_test))
 
 #4.Visualization 
-
 figure, axis = plt.subplots(2, 1)
 plt.subplots_adjust(hspace=1)
 
 axis[0].plot(hist.history['loss'])
 axis[0].plot(hist.history['mean_squared_logarithmic_error'])  #metrics=['mean_absolute_error']
-axis[0].plot(hist.history['mean_absolute_error'])
-axis[0].plot(hist.history['mean_squared_error'])
+#axis[0].plot(hist.history['mean_absolute_error'])
+#axis[0].plot(hist.history['mean_squared_error'])
 #axis[0].plot(hist.history['cosine_proximity'])
 
-axis[1].plot(hist.history['mean_absolute_percentage_error'])
-axis[1].plot(hist.history['mean_absolute_percentage_error'])
+#axis[1].plot(hist.history['mean_absolute_percentage_error'])
+#axis[1].plot(hist.history['mean_absolute_percentage_error'])
 
 axis[0].set_xlabel('epoch')
 axis[0].set_ylabel('Error')
-axis[0].legend(['mean_squared_logarithmic_error','mean_absolute_error','mean_absolute_percentage_error','mean_squared_error', 'cosine_proximity'], loc='upper right')
+axis[0].legend(['mean_squared_logarithmic_error'], loc='upper right')
 
 #plt.title('Model loss')
-
-axis[1].set_xlabel('epoch')
-axis[1].set_ylabel('Error')
-axis[1].legend(['mean_absolute_error','mean_absolute_percentage_error'], loc='upper right')
 
 plt.show()
