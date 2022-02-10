@@ -1,3 +1,5 @@
+#https://medium.com/@gtnjuvin/my-journey-into-deep-q-learning-with-keras-and-gym-3e779cc12762
+
 import gym
 import random
 import os
@@ -20,6 +22,7 @@ class Agent():
         self.brain              = self._build_model()
 
     def _build_model(self):
+        print ("action_size", self.action_size) # action_size 2; 0 or 1 left or right 
         model = Sequential()
         model.add(Dense(24, input_dim=self.state_size, activation='relu'))
         model.add(Dense(24, activation='relu'))
@@ -42,6 +45,7 @@ class Agent():
         print ("reward",reward) #reward 1.0
         print ("next_state",next_state) #next_state [[ 0.03082371  0.174289    0.00115942 -0.2630772 ]]
         self.memory.append((state, action, reward, next_state, done))
+        #print ("memory", self.memory)
         # Поэтому нам нужен список предыдущего опыта и наблюдений, чтобы переобучить модель с этим предыдущим опытом.
         # В алгоритме Deep Q Network нейронная сеть используется для выполнения наилучшего действия в зависимости от среды (обычно называемой «состоянием»).
                       #action У нас есть функция под названием Q Function, которая используется для оценки потенциального вознаграждения на основе состояния.
@@ -54,7 +58,7 @@ class Agent():
         if len(self.memory) < sample_batch_size:
             return
         sample_batch = random.sample(self.memory, sample_batch_size)
-        print ("sample_batch", sample_batch)
+        print ("sample_batch_start", len (sample_batch)) # запоминает 32 эпизода обучения 
         for state, action, reward, next_state, done in sample_batch:
             target = reward
             if not done:
@@ -66,17 +70,19 @@ class Agent():
                                                                 # Эта функция уменьшает разницу между нашим прогнозом и целью на скорость обучения.
                                                                 # И по мере того, как мы повторяем процесс обновления,
                                                                 # аппроксимация значения Q сходится к истинному значению Q:
-                                                                # потери уменьшаются, а оценка становится выше.
+                                                                # потери уменьшаются, а оценка становится выше
+                                                                # веса корректируются для модели
         if self.exploration_rate > self.exploration_min:
             self.exploration_rate *= self.exploration_decay
 
 class CartPole:
     def __init__(self):
         self.sample_batch_size = 32
-        self.episodes          = 10 # Это указывает, сколько игр мы хотим, чтобы агент сыграл, чтобы обучить себя.
+        self.episodes          = 290 # Это указывает, сколько игр мы хотим, чтобы агент сыграл, чтобы обучить себя.
         self.env               = gym.make('CartPole-v1')
 
         self.state_size        = self.env.observation_space.shape[0]
+        print ("self.state_size", self.state_size)
         self.action_size       = self.env.action_space.n
         self.agent             = Agent(self.state_size, self.action_size)
         print ("self.agent", Agent(self.state_size, self.action_size))
