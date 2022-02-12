@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import time
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 
 colorLower = (200)
 colorUpper = (250)
@@ -10,14 +10,14 @@ while(True):
  ret, frame = cap.read()
  frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
  frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
- #print (frame.shape) 480:640
+ #print (frame.shape) # 480:640
  step=5 
  step_x=(frame.shape[0])
  step_y=(frame.shape[1])
 
  y_resolution = [128,256,384,512]
  x_resolution = [96,196,288,384]
- 
+  
  circle = cv2.inRange(frame, colorLower, colorUpper)
  #cv2.imshow("Frame", frame)
  
@@ -32,8 +32,26 @@ while(True):
  for x_axe in x_resolution:
   cv2.line(frame,(0,x_axe),(640,x_axe),(255,0,0),2)
 
- cv2.circle(frame,(320,240), 20, (0,0,255), -1)
+ x_laser = 470
+ y_laser = 250
+
+ test_x = x_laser
+ test_y = y_laser
  
+ cv2.circle(frame,(x_laser, y_laser), 20, (0,0,255), -1)
+
+ for a in range (0,5,1): 
+  pos_x0 = 0 + 96*a 
+  pos_x1 = pos_x0 + 96
+  
+  pos_y0 = 0 + 128*a 
+  pos_y1 = pos_y0 + 128
+  
+  if ((test_x > pos_x0) & (test_x < pos_x1)): 
+   print ("x", a)
+  if ((test_y > pos_y0) & (test_y < pos_y1)): 
+   print ("y", a)
+
  cv2.imshow("Frame", frame)
  if cv2.waitKey(1) & 0xFF == ord('q'):
   break
