@@ -24,13 +24,12 @@ def camera (x_receive,y_receive): # x_receive,y_receive
   ret, frame = cap.read()
   frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
   frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
- #print (frame.shape) # 480:640  height:lenght
-  step=5 
-  step_x=(frame.shape[0])
-  step_y=(frame.shape[1])
-
-  y_resolution = [128,256,384,512]
-  x_resolution = [96,196,288,384]
+ #print (frame.shape) # 480:640  height:lenght # print (frame.shape[0])
+  
+  step_y=int(frame.shape[1]/5) # step = 5 
+  y_resolution = [step_y,step_y*2,step_y*3,step_y*4]
+  step_x=int(frame.shape[0]/5)
+  x_resolution = [step_x,step_x*2,step_x*3,step_x*4]
   
   circle = cv2.inRange(frame, colorLower, colorUpper)
  #cv2.imshow("Frame", frame)
@@ -42,11 +41,11 @@ def camera (x_receive,y_receive): # x_receive,y_receive
    if radius > 0:
     cv2.circle(frame, (int(x), int(y)), int(radius),(0, 255, 255), 2)   
   for y_axe in y_resolution:
-   cv2.line(frame,(y_axe,0),(y_axe,640),(255,0,0),2)
+   cv2.line(frame,(y_axe,0),(y_axe,int (frame.shape[1])),(255,0,0),2)
   for x_axe in x_resolution:
-   cv2.line(frame,(0,x_axe),(640,x_axe),(155,69,0),2)
+   cv2.line(frame,(0,x_axe),(int (frame.shape[1]),x_axe),(155,69,0),2)
 
-  y_laser = 620
+  y_laser = 20
   x_laser = 459
 
   test_y = y_laser
@@ -55,11 +54,11 @@ def camera (x_receive,y_receive): # x_receive,y_receive
   cv2.circle(frame,(y_laser, x_laser), 20, (0,0,255), -1)
 
   for a in range (0,5,1): 
-   pos_x0 = 0 + 96*a 
-   pos_x1 = pos_x0 + 96
+   pos_x0 = 0 + step_x*a 
+   pos_x1 = pos_x0 + step_x
   
-   pos_y0 = 0 + 128*a 
-   pos_y1 = pos_y0 + 128
+   pos_y0 = 0 + step_y*a 
+   pos_y1 = pos_y0 + step_y
   
    if ((test_x > pos_x0) & (test_x < pos_x1)): 
     print ("y",a)
