@@ -71,8 +71,12 @@ def camera (x_offset, y_offset): # +-x_pos, +-y_pos
  if cv2.waitKey(1) & 0xFF == ord('q'):
   print ("break")
  # break
-
- return (reward_x,reward_y)
+ if ((y_laser>480) or (x_laser>640)):
+  condition=0
+ else:
+  condition=1   
+ 
+ return (reward_x,reward_y, condition)
 
  cap.release()
  cv2.destroyAllWindows()
