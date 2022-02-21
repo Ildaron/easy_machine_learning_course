@@ -1,5 +1,8 @@
 #https://medium.com/@gtnjuvin/my-journey-into-deep-q-learning-with-keras-and-gym-3e779cc12762
-import gym
+#import gym #
+import env
+
+
 import random
 import os
 import numpy as np
@@ -7,7 +10,7 @@ from collections      import deque
 from keras.models     import Sequential
 from keras.layers     import Dense
 from tensorflow.keras.optimizers import Adam
-
+one_time=0
 class Agent():
     def __init__(self, state_size, action_size):
         self.state_size         = state_size
@@ -25,25 +28,37 @@ class Agent():
         model = Sequential()
         model.add(Dense(24, input_dim=self.state_size, activation='relu'))
         model.add(Dense(24, activation='relu'))
-        model.add(Dense(self.action_size, activation='linear'))
+        
+        #model.add(Dense(self.action_size, activation='linear'))  # ПРЕДСКАЗЫВАЕТ ТОЛЬКО ОДНО ЗНАЧЕНИЕ А НАДО ДВА
+        model.add(Dense(2, kernel_initializer='normal')) 
+
         model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
         return model
 
     def act(self, state):
-        if np.random.rand() <= self.exploration_rate:
-            print ("random",random.randrange(self.action_size) )# random 0
-            return random.randrange(self.action_size) 
-        act_values = self.brain.predict(state) # передаем на прогноз состояние среды
-        print ("act_values",act_values)        # 
-        return np.argmax(act_values[0])        # возвращает влево или в право
+        #if np.random.rand() <= self.exploration_rate:
+        #    print ("random",random.randrange(self.action_size) )# random 0
+        #    return random.randrange(self.action_size)
+        
+        self.coordnate = self.brain.predict(state) # передаем на прогноз состояние среды
+
+        #print ("coordnate",type (coordnate))
+               
+        #print (" x_offset, y_offset",  x_offset, y_offset)
+        #print ("act_values",act_values)        # 
+        return (self.coordnate[0])          # возвращает влево или в право
 
 
     def remember(self, state, action, reward, next_state, done):
-        print ("state",state) #state [[ 0.0312402  -0.02082476  0.00057091  0.02942555]]
+        
+
+             
+        print ("state",state)   #state [[ 0.0312402  -0.02082476  0.00057091  0.02942555]]
         print ("action",action) #action 1 or 0
         print ("reward",reward) #reward 1.0
         print ("next_state",next_state) #next_state [[ 0.03082371  0.174289    0.00115942 -0.2630772 ]]
         self.memory.append((state, action, reward, next_state, done))
+
         #print ("memory", self.memory)
         # Поэтому нам нужен список предыдущего опыта и наблюдений, чтобы переобучить модель с этим предыдущим опытом.
         # В алгоритме Deep Q Network нейронная сеть используется для выполнения наилучшего действия в зависимости от среды (обычно называемой «состоянием»).
@@ -78,27 +93,56 @@ class CartPole:
     def __init__(self):
         self.sample_batch_size = 32
         self.episodes          = 290 # Это указывает, сколько игр мы хотим, чтобы агент сыграл, чтобы обучить себя.
-        self.env               = gym.make('CartPole-v1')
+        #self.env               = gym.make('CartPole-v1')
 
-        self.state_size        = self.env.observation_space.shape[0]
-        print ("self.state_size", self.state_size)
-        self.action_size       = self.env.action_space.n
+        self.state_size        = 2 #self.env.observation_space.shape[0]
+
+        #print ("self.state_size", self.state_size) # 4
+        self.action_size       = 2 # self.env.action_space.n
         self.agent             = Agent(self.state_size, self.action_size)
-        print ("self.agent", Agent(self.state_size, self.action_size))
+        #print ("self.agent", Agent(self.state_size, self.action_size))
 
     def run(self):
             for index_episode in range(self.episodes):
-                state = self.env.reset()
-                state = np.reshape(state, [1, self.state_size])
-                
+                #state = self.env.reset()
+                global one_time
+                #state = np.reshape(state, [1, self.state_size])
+                if (one_time == 0):
+                    one_time=1
+                    state = [[0,0]]
+
+         
                 done = False
                 index = 0
                 #while not done: # Done логическое значение, указывающее, закончилась игра или нет.
                 #self.env.render()
-                action = self.agent.act(state) # передаем на прогноз состояние среду
-                next_state, reward, done, _ = self.env.step(action) # передаем прогноз в среду - и тут фишка, что сама уже среда выдает - next_state, reward, done
-                next_state = np.reshape(next_state, [1, self.state_size])
+                action = self.agent.act(state) # y_laser, x_laser #передаем на прогноз состояние среду
+                print ("asasas", action)
 
+                #y_laser =action[0]
+                #x_laser =action[1]
+                #next_state, reward, done, _ = self.env.step(action) # передаем прогноз в среду - и тут фишка, что сама уже среда выдает - next_state, reward, done
+
+
+
+                x_offset=action[0]
+                y_offset=action[1]
+                
+                #import testos
+
+                #print (testos(x_offset, y_offset))
+                x_y_coord = env.camera(x_offset, y_offset)
+                
+                #reward_x,reward_y, next_state, y_laser, x_laser = env(x_offset, y_offset)
+
+                #reward=reward_x+reward_y
+                reward = x_y_coord[0]
+                next_state = [x_y_coord[3], x_y_coord[4]]
+                print ("ildar", next_state)  # ildar [ 0.04968709 -0.17844233  0.04515736  0.33838844]
+                 
+                next_state = np.reshape(next_state, [1, self.state_size])
+                print ("ildar1", next_state) # ildar1 [[ 0.04968709 -0.17844233  0.04515736  0.33838844]]
+ 
                 self.agent.remember(state, action, reward, next_state, done) # 
 
                 state = next_state
