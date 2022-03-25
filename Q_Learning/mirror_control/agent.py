@@ -1,127 +1,179 @@
-import cv2
+#https://medium.com/@gtnjuvin/my-journey-into-deep-q-learning-with-keras-and-gym-3e779cc12762
+#import gym #
+import numpy
+print ("ok")
+import env
+import random
+import os
 import numpy as np
-import time
-cap = cv2.VideoCapture(0)
+from collections      import deque
+from keras.models     import Sequential
+from keras.layers     import Dense
+from tensorflow.keras.optimizers import Adam
 
-#colorLower = (200)
-#colorUpper = (250)
+one_time=0
+class Agent():
+    def __init__(self, state_size, action_size):
+        self.state_size         = state_size
+        self.action_size        = action_size
+        self.memory             = deque(maxlen=2000)
+        self.learning_rate      = 0.001
+        self.gamma              = 0.95  # гамма — используется для расчета будущего вознаграждения со скидкой.
+        self.exploration_rate   = 1.0   # когда агент становится более опытным, мы позволяем ему решать, какое действие предпринять.
+        self.exploration_min    = 0.01
+        self.exploration_decay  = 0.995 # мы хотим уменьшить количество исследований, так как играть в игры становится все лучше и лучше.
+        self.brain              = self._build_model()
 
-#def camera (): # x_receive,y_receive
+    def _build_model(self):
+        #print ("action_size", self.action_size) # action_size 2; 0 or 1 left or right 
+        model = Sequential()
+        model.add(Dense(12, activation='relu'))
+        model.add(Dense(6, activation='relu')) #24
+        
+        #model.add(Dense(4, activation='linear'))  # ПРЕДСКАЗЫВАЕТ ТОЛЬКО ОДНО ЗНАЧЕНИЕ А НАДО ДВА
+        model.add(Dense(4, activation='softmax'))
+        
+        #model.add(Dense(4, kernel_initializer='normal')) 
 
-x_task = 300
-y_task = 300
+        #model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
+        model.compile(optimizer='adam',loss='categorical_crossentropy')
+        return model
 
-one_time = 0
+    def act(self, state):
+        #if np.random.rand() <= self.exploration_rate:
+        #    print ("random",random.randrange(self.action_size) )# random 0
+        #    return random.randrange(self.action_size)
+        print ("predict state", state)
+        self.coordnate = self.brain.predict(state) # передаем на прогноз состояние среды
+        
 
-def camera (steps, state): # x_offset, y_offset   передать себя текущею позицию
- test_x=state[0]
- test_x=test_x[1]
- 
- test_y=state[0]
- test_y=test_y[1]
- global one_time
- global x_before
- global y_before
- #global x_laser
- #global y_laser
- time.sleep(1)
- ret, frame = cap.read()
- frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
- frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
- if (one_time == 0):
-  print ("one time was")
-  x_before=0
-  y_before=0
-  one_time=1
-   
- # before movinf  
- # circle = cv2.inRange(frame, colorLower, colorUpper)
- # cnts = cv2.findContours(circle.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
- # for c in cnts:   
- #  ((x_before, y_before), radius) = cv2.minEnclosingCircle(c)
- #  if radius > 0:
- #   cv2.circle(frame, (int(x), int(y)), int(radius),(0, 255, 255), 2)
- #  else:
- 
- # moving action
- # simulation + 30 or - 30 in x and y
-    
- # after moving
-#
-# circle = cv2.inRange(frame, colorLower, colorUpper)
-# cnts = cv2.findContours(circle.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
-# for c in cnts:   
-#  ((x, y), radius) = cv2.minEnclosingCircle(c)
-#  if radius > 0:
-#   cv2.circle(frame, (int(x), int(y)), int(radius),(0, 255, 255), 2)   
-  
+        #self.coordnate =  [0, 0.9, 0.7, 0, 0, 0, 0, 0]
+        #print ("self.coordnate[0]", np.argmax(self.coordnate))      = 1   
 
- print (steps)
- if (steps == 0):
-  y_laser = y_before + 50
-  x_laser = x_before 
- if (steps == 1 & test_y>0): 
-  y_laser = y_before - 50 #y_laser = y_before - 50
-  x_laser = x_before 
- else:
-  y_laser = y_before
-  x_laser = x_before
- if (steps == 2):
-  y_laser = y_before 
-  x_laser = x_before +50
- if (steps == 3 & test_x>0):
-  y_laser = y_before 
-  x_laser = x_before - 50 #x_laser = x_before -50 
- else:
-  y_laser = y_before
-  x_laser = x_before
+        #print (" x_offset, y_offset",  x_offset, y_offset)
+        #print ("act_values",act_values)        #          # возвращает влево или в право
+        return np.argmax(self.coordnate)
 
+    def remember(self, state, action, reward, next_state, done):
+        
 
- #y_laser = y_before + y_offset
- #x_laser = x_before + x_offset
-  
- if ((abs(x_task - x_laser) - abs(x_task - x_before))>0):
-  reward_x = 0
- else:
-  reward_x = 1        
+             
+        #print ("state",state)   #state [[ 0.0312402  -0.02082476  0.00057091  0.02942555]]
+        #print ("action",action) #action 1 or 0
+        #print ("reward",reward) #reward 1.0
+        #print ("next_state",next_state) #next_state [[ 0.03082371  0.174289    0.00115942 -0.2630772 ]]
+        self.memory.append((state, action, reward, next_state, done))
 
- if ((abs(y_task-y_laser) - abs(y_task - y_before))>0):
-  reward_y = 0
- else:
-  reward_y = 1
- cv2.circle(frame,(320, 230), 5, (250,0,255), -1)
+        #print ("memory", self.memory)
+        # Поэтому нам нужен список предыдущего опыта и наблюдений, чтобы переобучить модель с этим предыдущим опытом.
+        # В алгоритме Deep Q Network нейронная сеть используется для выполнения наилучшего действия в зависимости от среды (обычно называемой «состоянием»).
+                      #action У нас есть функция под названием Q Function, которая используется для оценки потенциального вознаграждения на основе состояния.
+                      #Мы называем это Q (состояние, действие), где Q — функция, которая вычисляет ожидаемое будущее значение на основе состояния и действия.
+                      #reward  from self.env.step(action)
+                      #next_state from self.env.step(action)
+                      #done from self.env.step(action)
+        
+    def replay(self, sample_batch_size):  # Эта функция уменьшает разницу между нашим прогнозом и целью на скорость обучения.
+        if len(self.memory) <20: # sample_batch_size: # пока 32 раща не сделает, собака,знак лти не наоборот
+            #print ("len(self.memory", len(self.memory))
+            #print ("sample_batch_size", sample_batch_size)       
+            #print ("not yet")
+            return
+        print ("ok")
+        sample_batch = random.sample(self.memory, sample_batch_size)
+        #print ("sample_batch_start", len (sample_batch)) # запоминает 32 эпизода обучения 
+        for state, action, reward, next_state, done in sample_batch:
+            print ("reward", reward)
+            print ("state", state)
+            #state=state[0]
+            print ("state", state)
+            print ("type", type(state))
+            next_state=next_state[0]
+            print ("next_state",next_state)
+            
+            print ("action", action)
+            print ("done", done)
 
- cv2.circle(frame,(x_laser, y_laser), 5, (0,0,255), -1)
- cv2.imshow("Frame", frame)
+            
+            target = reward
+            if (done == 0):
+              target = reward + self.gamma * np.amax(self.brain.predict(next_state)[0]) #именно одна целая игра здесь, [0]
+              print ("the attept was finished")
 
- x_before = x_laser
- y_before = y_laser
+            #target = reward + self.gamma * np.amax(self.brain.predict(next_state)[0]) #именно одна целая игра здесь, [0]
+             
+            # Target - уменьшить потери, то есть разрыв между прогнозом и целью.
+            #print ("state", state)
+            print ("ok1")
+            target_f = self.brain.predict(state)
+            print ("ok2")
+            print ("targettttttttttttt", target_f) # targettttttttttttt [[0.25 0.25 0.25 0.25]]
+            #target_f=2;#[0,0,0,1]
+            #target_f[0][action] = target
+            #target_f=(100,100)
+            #state=state[0]
+          
+            #state=[50  0]
+            state= a = np.array([[50, 50]]) 
+            self.brain.fit(state, target_f, epochs=1, verbose=0)# Керас вычитает target из вывода нейронной сети и возводит ее в квадрат
+            print ("ok3")                                       # Эта функция уменьшает разницу между нашим прогнозом и целью на скорость обучения.
+                                                                # И по мере того, как мы повторяем процесс обновления,
+                                                                # аппроксимация значения Q сходится к истинному значению Q:
+                                                                # потери уменьшаются, а оценка становится выше
+                                                                # веса корректируются для модели
+        if self.exploration_rate > self.exploration_min:
+            self.exploration_rate *= self.exploration_decay
 
+class CartPole:
+    def __init__(self):
+        self.sample_batch_size = 20 #размер партии образца
+        self.episodes          = 600 # Это указывает, сколько игр мы хотим, чтобы агент сыграл, чтобы обучить себя.
+        #self.env               = gym.make('CartPole-v1')
 
- if cv2.waitKey(1) & 0xFF == ord('q'):
-  print ("break")
- # break
- if ((y_laser>480) or (x_laser>640) or (y_laser<0) or (x_laser<0)):
-  condition=0
- else:
-  condition=1   
- reward = reward_x+reward_y
- if (reward==2):
-  reward=1
- if (reward==1):
-  reward=1
- print ("condition",condition)
- #print ()
- return (reward, condition, y_laser, x_laser )
- #return (reward_x,reward_y, condition, y_laser, x_laser )
+        self.state_size        = 2 #self.env.observation_space.shape[0]
 
- cap.release()
- cv2.destroyAllWindows()
+        #print ("self.state_size", self.state_size) # 4
+        self.action_size       = 2 # self.env.action_space.n
+        self.agent             = Agent(self.state_size, self.action_size)
+        #print ("self.agent", Agent(self.state_size, self.action_size))
 
-#while 1:
-#for _ in range (0,50,1):
-# time.sleep(1)         
-# y_offset = 25
-# x_offset = 25
-# print (camera(x_offset,y_offset))
+    def run(self):
+            for index_episode in range(self.episodes):
+                global one_time
+                if (one_time == 0):
+                    one_time=1
+                    state = [[0,0]]
+                index = 0
 
+                action = self.agent.act(state) # y_laser, x_laser #передаем на прогноз состояние среду
+
+                #y_laser =action[0]
+                #x_laser =action[1]
+                #next_state, reward, done, _ = self.env.step(action) # передаем прогноз в среду - и тут фишка,
+                                                                     #что сама уже среда выдает - next_state, reward, done
+               
+                #import testos
+                #print (testos(x_offset, y_offset))
+                
+                print ("action",action)
+
+                x_y_coord = env.camera(action, state) #x_offset, y_offset
+                #reward_x,reward_y, next_state, y_laser, x_laser = env(x_offset, y_offset)
+                #reward=reward_x+reward_y
+                reward = x_y_coord[0]
+                next_state = [x_y_coord[2], x_y_coord[3]]
+                #print ("next_state", next_state)  # ildar [ 0.04968709 -0.17844233  0.04515736  0.33838844]                 
+                next_state = np.reshape(next_state, [1, self.state_size])
+                #print ("next_state_reshape", next_state) # ildar1 [[ 0.04968709 -0.17844233  0.04515736  0.33838844]]
+
+                done =  x_y_coord[1]
+                self.agent.remember(state, action, reward, next_state, done) # 
+
+                state = next_state
+                index += 1
+                #print("Episode {}# Score: {}".format(index_episode, index + 1))
+                self.agent.replay(self.sample_batch_size) # собака sample_batch_size = 32
+
+if __name__ == "__main__":
+    cartpole = CartPole()
+    cartpole.run()
