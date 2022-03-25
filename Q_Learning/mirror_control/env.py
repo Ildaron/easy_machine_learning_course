@@ -13,8 +13,12 @@ y_task = 300
 
 one_time = 0
 
-def camera (steps): # x_offset, y_offset
-          
+def camera (steps, state): # x_offset, y_offset   передать себя текущею позицию
+ test_x=state[0]
+ test_x=test_x[1]
+ 
+ test_y=state[0]
+ test_y=test_y[1]
  global one_time
  global x_before
  global y_before
@@ -54,18 +58,23 @@ def camera (steps): # x_offset, y_offset
 
  print (steps)
  if (steps == 0):
-  y_laser = y_before + 5
+  y_laser = y_before + 50
   x_laser = x_before 
- if (steps == 1):
-  y_laser = y_before - 5
+ if (steps == 1 & test_y>0): 
+  y_laser = y_before - 50 #y_laser = y_before - 50
   x_laser = x_before 
+ else:
+  y_laser = y_before
+  x_laser = x_before
  if (steps == 2):
   y_laser = y_before 
-  x_laser = x_before +5
- if (steps == 3):
+  x_laser = x_before +50
+ if (steps == 3 & test_x>0):
   y_laser = y_before 
-  x_laser = x_before -5 
-
+  x_laser = x_before - 50 #x_laser = x_before -50 
+ else:
+  y_laser = y_before
+  x_laser = x_before
 
 
  #y_laser = y_before + y_offset
@@ -97,6 +106,10 @@ def camera (steps): # x_offset, y_offset
  else:
   condition=1   
  reward = reward_x+reward_y
+ if (reward==2):
+  reward=1
+ if (reward==1):
+  reward=1
  print ("condition",condition)
  #print ()
  return (reward, condition, y_laser, x_laser )
