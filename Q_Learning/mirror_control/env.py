@@ -2,117 +2,90 @@ import cv2
 import numpy as np
 import time
 cap = cv2.VideoCapture(0)
-
-#colorLower = (200)
-#colorUpper = (250)
-
-#def camera (): # x_receive,y_receive
-
-x_task = 300
-y_task = 300
-
 one_time = 0
 
-def camera (steps, state): # x_offset, y_offset   передать себя текущею позицию
+def camera (steps, state): # x_offset, y_offset передать себя текущею позицию
+
+ x_task = 300
+ y_task = 300
+ #print (state) 
  test_x=state[0]
- test_x=test_x[1]
+ test_x=test_x[0]
  
  test_y=state[0]
  test_y=test_y[1]
  global one_time
- global x_before
- global y_before
- #global x_laser
- #global y_laser
- time.sleep(1)
  ret, frame = cap.read()
  frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
  frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
- if (one_time == 0):
-  print ("one time was")
-  x_before=0
-  y_before=0
-  one_time=1
-   
- # before movinf  
- # circle = cv2.inRange(frame, colorLower, colorUpper)
- # cnts = cv2.findContours(circle.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
- # for c in cnts:   
- #  ((x_before, y_before), radius) = cv2.minEnclosingCircle(c)
- #  if radius > 0:
- #   cv2.circle(frame, (int(x), int(y)), int(radius),(0, 255, 255), 2)
- #  else:
- 
- # moving action
- # simulation + 30 or - 30 in x and y
-    
- # after moving
-#
-# circle = cv2.inRange(frame, colorLower, colorUpper)
-# cnts = cv2.findContours(circle.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
-# for c in cnts:   
-#  ((x, y), radius) = cv2.minEnclosingCircle(c)
-#  if radius > 0:
-#   cv2.circle(frame, (int(x), int(y)), int(radius),(0, 255, 255), 2)   
-  
 
- print (steps)
+ #print ("steps", steps, "test_y", test_y, "test_x", test_x)
  if (steps == 0):
-  y_laser = y_before + 50
-  x_laser = x_before 
- if (steps == 1 & test_y>0): 
-  y_laser = y_before - 50 #y_laser = y_before - 50
-  x_laser = x_before 
- else:
-  y_laser = y_before
-  x_laser = x_before
+  #print ("ok0")   
+  y_laser_after = test_y + 10
+  x_laser_after = test_x 
+ if (steps == 1 ): #& test_y>0
+  #print ("ok1")   
+  y_laser_after = test_y - 10 #y_laser = y_before - 50
+  x_laser_after = test_x 
+ #else:
+ # y_laser_after = test_y
+ # x_laser_after = test_x
  if (steps == 2):
-  y_laser = y_before 
-  x_laser = x_before +50
- if (steps == 3 & test_x>0):
-  y_laser = y_before 
-  x_laser = x_before - 50 #x_laser = x_before -50 
- else:
-  y_laser = y_before
-  x_laser = x_before
-
-
- #y_laser = y_before + y_offset
- #x_laser = x_before + x_offset
+  #print ("ok2")   
+  y_laser_after = test_y 
+  x_laser_after = test_x +10
   
- if ((abs(x_task - x_laser) - abs(x_task - x_before))>0):
+ if (steps == 3 ):#& test_x>0
+  #print ("ok3")   
+  y_laser_after = test_y 
+  x_laser_after = test_x - 10 #x_laser = x_before -50 
+ # else:
+ # y_laser_after = test_y
+ # x_laser_after = test_x
+ # print ("y_laser_after",y_laser_after,"x_laser_after", x_laser_after)
+  
+ if ((abs(x_task - x_laser_after) < abs(x_task - test_x))):
+  reward_x = 1
+ else:
   reward_x = 0
- else:
-  reward_x = 1        
-
- if ((abs(y_task-y_laser) - abs(y_task - y_before))>0):
-  reward_y = 0
- else:
+  
+ if ((abs(y_task-y_laser_after) < abs(y_task - test_y))):
   reward_y = 1
- cv2.circle(frame,(320, 230), 5, (250,0,255), -1)
+ else:
+  reward_y = 0
 
- cv2.circle(frame,(x_laser, y_laser), 5, (0,0,255), -1)
+ #print ("reward_x",reward_x,"reward_y",reward_y)  
+ reward = reward_x+reward_y 
+
+ cv2.circle(frame,(x_task, y_task), 5, (250,0,255), -1)
+ cv2.circle(frame,(x_laser_after, y_laser_after), 5, (0,0,255), -1)
  cv2.imshow("Frame", frame)
 
- x_before = x_laser
- y_before = y_laser
-
+ #x_before = x_laser
+ #y_before = y_laser
 
  if cv2.waitKey(1) & 0xFF == ord('q'):
   print ("break")
  # break
- if ((y_laser>480) or (x_laser>640) or (y_laser<0) or (x_laser<0)):
+ if ((y_laser_after>480) or (x_laser_after>640) or (y_laser_after<0) or (x_laser_after<0)):
   condition=0
+  print ("stop game")
  else:
-  condition=1   
- reward = reward_x+reward_y
- if (reward==2):
-  reward=1
- if (reward==1):
-  reward=1
- print ("condition",condition)
+  condition=1
+  
+ 
+# if (reward==2 | reward==1):
+#  reward=1
+# else:
+#  reward=0   
+
+ #if (reward==1):
+ # reward=1
+ #print ("condition",condition)
  #print ()
- return (reward, condition, y_laser, x_laser )
+ #print ("reward", reward)
+ return (reward, condition, x_laser_after, y_laser_after)
  #return (reward_x,reward_y, condition, y_laser, x_laser )
 
  cap.release()
@@ -124,4 +97,3 @@ def camera (steps, state): # x_offset, y_offset   передать себя те
 # y_offset = 25
 # x_offset = 25
 # print (camera(x_offset,y_offset))
-
