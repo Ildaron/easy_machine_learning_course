@@ -47,6 +47,8 @@ class DQNAgent:
             target = reward
             #if not done:
             target = (reward + self.gamma *np.amax(self.model.predict(next_state)[0]))
+            # начение Q для определенной пары состояние-действие должно быть наградой,
+            # полученной при переходе в новое состояние (путем выполнения этого действия), добавленной к значению наилучшего действия в следующем состоянии.
             target_f = self.model.predict(state) #state = next_state
             target_f[0][action] = target       
             self.model.fit(state, target_f, epochs=1, verbose=0) # 
