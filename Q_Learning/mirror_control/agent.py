@@ -1,63 +1,93 @@
-import cv2
+import random
+import gym
 import numpy as np
-import time
-#cap = cv2.VideoCapture(0)
-one_time = 0
+from collections import deque
+from keras.models import Sequential
+from keras.layers import Dense
+from tensorflow.keras.optimizers import Adam
+import env
 
-def camera (steps, state): # x_offset, y_offset передать себя текущею позицию
+EPISODES = 5000
 
- x_task = 100
- y_task = 100
- #print (state) 
- test_x=state[0]
- test_x=test_x[0]
- 
- test_y=state[0]
- test_y=test_y[1]
- global one_time
- frame=cv2.imread("img.bmp")
- frame=cv2.resize(frame,(200,200))
+class DQNAgent:
+    def __init__(self, state_size, action_size):
+        self.state_size = state_size
+        self.action_size = action_size
+        self.memory = deque(maxlen=1000) #2000
+        self.gamma = 0.95    # discount rate
+        self.epsilon = 1.0  # exploration rate
+        self.epsilon_min = 0.01
+        self.epsilon_decay = 0.995
+        self.learning_rate = 0.001
+        self.model = self._build_model()
 
- if (steps == 0):   
-  y_laser_after = test_y + 10
-  x_laser_after = test_x 
- if (steps == 1 ): #& test_y>0
-  y_laser_after = test_y - 10 #y_laser = y_before - 50
-  x_laser_after = test_x 
- if (steps == 2):
-  y_laser_after = test_y 
-  x_laser_after = test_x +10
- if (steps == 3 ):#& test_x>0
-  y_laser_after = test_y 
-  x_laser_after = test_x - 10 #x_laser = x_before -50 
+    def _build_model(self):
+        model = Sequential()
+        model.add(Dense(24, input_dim=self.state_size, activation='relu'))
+        #model.add(Dense(4, activation='relu'))
+        #model.add(Dense(self.action_size, activation='linear'))
+        #model.compile(loss='mse',optimizer=Adam(lr=self.learning_rate))
+        model.add(Dense(4, activation='softmax'))        
+        model.compile(optimizer='adam',loss='categorical_crossentropy')
+        return model
 
-  
- if ((abs(x_task - x_laser_after) < abs(x_task - test_x))):
-  reward_x = 1
- else:
-  reward_x = 0
-  
- if ((abs(y_task-y_laser_after) < abs(y_task - test_y))):
-  reward_y = 1
- else:
-  reward_y = 0
+    def memorize(self, state, action, reward, next_state, done):
+        self.memory.append((state, action, reward, next_state, done))
 
- #print ("reward_x",reward_x,"reward_y",reward_y)  
- reward = reward_x+reward_y 
+    def act(self, state):
+        if np.random.rand() <= self.epsilon: #self.epsilon:
+            #print ("not")
+            return random.randrange(self.action_size)
+        act_values = self.model.predict(state)
+        return np.argmax(act_values[0])  # returns action
 
- cv2.circle(frame,(x_task, y_task), 5, (250,0,255), -1)
- cv2.circle(frame,(x_laser_after, y_laser_after), 5, (0,0,255), -1)
- cv2.imshow("Frame", frame)
+    def replay(self, batch_size):
+        minibatch = random.sample(self.memory, batch_size)
+        for state, action, reward, next_state, done in minibatch:
+            target = reward
+            #if not done:
+            target = (reward + self.gamma *np.amax(self.model.predict(next_state)[0]))
+            target_f = self.model.predict(state) #state = next_state
+            target_f[0][action] = target       
+            self.model.fit(state, target_f, epochs=1, verbose=0) # 
+        if self.epsilon > self.epsilon_min:
+            self.epsilon *= self.epsilon_decay
 
- if cv2.waitKey(1) & 0xFF == ord('q'):
-  print ("break")
- # break
- if ((y_laser_after>200) or (x_laser_after>200) or (y_laser_after<0) or (x_laser_after<0)):
-  condition=0
-  print ("stop game")
-  y_laser_after = 0
-  x_laser_after = 0
-  reward=0
- else:
-  condition=1 
- return (reward, condition, x_laser_after, y_laser_after)
+    def load(self, name):
+        self.model.load_weights(name)
+
+    def save(self, name):
+        self.model.save_weights(name)
+
+if __name__ == "__main__":
+    #env = gym.make('CartPole-v1')
+    state_size = 2#env.observation_space.shape[0] #state_size 4
+    action_size = 4#env.action_space.n # action_size 2
+    agent = DQNAgent(state_size, action_size) #agent <__main__.DQNAgent object at 0x00000158F7EDF700>
+    # agent.load("./save/cartpole-dqn.h5")
+    done = False
+    batch_size = 16 # 32 #128
+
+    for e in range(EPISODES):
+        state=[[100,100]] # reset if point in the out of the picture
+        state = np.reshape(state, [1, 2])
+        for time in range(5000): #5000
+            action = agent.act(state) #
+            data_from_env = env.camera(action, state)
+            reward = data_from_env[0]
+            next_state = [data_from_env[2], data_from_env[3]]  # x and y coordinate
+            next_state = np.reshape(next_state, [1, 2])
+            done =  data_from_env[1]            
+            #reward = reward if not done else -10
+            next_state = np.reshape(next_state, [1, 2])
+            agent.memorize(state, action, reward, next_state, done)
+
+            state = next_state
+            if done==0:
+                #print("episode: {}/{}, score: {}, e: {:.2}".format(e, EPISODES, time, agent.epsilon))
+                break
+            if len(agent.memory) > batch_size: #batch_size
+                #print ("problem")
+                agent.replay(batch_size)
+        # if e % 10 == 0:
+        #     agent.save("./save/cartpole-dqn.h5")
