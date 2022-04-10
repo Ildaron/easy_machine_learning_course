@@ -2,9 +2,10 @@ import cv2
 import numpy as np
 import time
 #cap = cv2.VideoCapture(0)
+import math
 one_time = 0
 
-def camera (steps, state): # x_offset, y_offset передать себя текущею позицию
+def camera (steps, state): # steps - комманда на действие, state - текущее состояние 
 
  x_task = 100
  y_task = 100
@@ -15,7 +16,7 @@ def camera (steps, state): # x_offset, y_offset передать себя тек
  test_y=state[0]
  test_y=test_y[1]
  global one_time
- frame=cv2.imread("img.bmp")
+ frame=cv2.imread("img.bmp") # для примера
  frame=cv2.resize(frame,(200,200))
 
  if (steps == 0):   
@@ -36,15 +37,23 @@ def camera (steps, state): # x_offset, y_offset передать себя тек
   reward_x = 1
  else:
   reward_x = 0
-  
  if ((abs(y_task-y_laser_after) < abs(y_task - test_y))):
   reward_y = 1
  else:
   reward_y = 0
 
- #print ("reward_x",reward_x,"reward_y",reward_y)  
- reward = reward_x+reward_y 
+ if (y_laser_after==100 & x_laser_after==100): # когда дошли до нужной точки
+  reward=2
+  condition=0
+ #else:           
+ # reward=0   
+ #calculate distance  - думал ввести коээфициент для того чтобы увеличить награду если становимся ближе к цели
+ distance = (x_task -  x_laser_after)**2+(y_task-y_laser_after)**2 
+ distance = math.sqrt(distance)
+ #print ("distance", distance)
 
+ reward = reward_x+reward_y 
+ #reward=(reward/distance)
  cv2.circle(frame,(x_task, y_task), 5, (250,0,255), -1)
  cv2.circle(frame,(x_laser_after, y_laser_after), 5, (0,0,255), -1)
  cv2.imshow("Frame", frame)
@@ -52,6 +61,7 @@ def camera (steps, state): # x_offset, y_offset передать себя тек
  if cv2.waitKey(1) & 0xFF == ord('q'):
   print ("break")
  # break
+
  if ((y_laser_after>200) or (x_laser_after>200) or (y_laser_after<0) or (x_laser_after<0)):
   condition=0
   print ("stop game")
