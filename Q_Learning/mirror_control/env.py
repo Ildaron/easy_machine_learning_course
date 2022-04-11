@@ -20,17 +20,17 @@ def camera (steps, state): # steps - комманда на действие, sta
  frame=cv2.resize(frame,(200,200))
 
  if (steps == 0):   
-  y_laser_after = test_y + 10
+  y_laser_after = test_y + 1
   x_laser_after = test_x 
  if (steps == 1 ): #& test_y>0
-  y_laser_after = test_y - 10 #y_laser = y_before - 50
+  y_laser_after = test_y - 1 #y_laser = y_before - 50
   x_laser_after = test_x 
  if (steps == 2):
   y_laser_after = test_y 
-  x_laser_after = test_x +10
+  x_laser_after = test_x +1
  if (steps == 3 ):#& test_x>0
   y_laser_after = test_y 
-  x_laser_after = test_x - 10 #x_laser = x_before -50 
+  x_laser_after = test_x - 1 #x_laser = x_before -50 
 
   
  if ((abs(x_task - x_laser_after) < abs(x_task - test_x))):
@@ -42,9 +42,7 @@ def camera (steps, state): # steps - комманда на действие, sta
  else:
   reward_y = 0
 
- if (y_laser_after==100 & x_laser_after==100): # когда дошли до нужной точки
-  reward=2
-  condition=0
+
  #else:           
  # reward=0   
  #calculate distance  - думал ввести коээфициент для того чтобы увеличить награду если становимся ближе к цели
