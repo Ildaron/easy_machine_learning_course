@@ -1,4 +1,4 @@
-from baselines.common.atari_wrappers import make_atari, wrap_deepmind
+import env
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
@@ -16,19 +16,12 @@ epsilon_interval = (
 batch_size = 32  # Size of batch taken from replay buffer
 max_steps_per_episode = 10000
 
-# Use the Baseline Atari environment because of Deepmind helper functions
-env = make_atari("BreakoutNoFrameskip-v4")
-# Warp the frames, grey scale, stake four frame and scale to smaller ratio
-env = wrap_deepmind(env, frame_stack=True, scale=True)
-env.seed(seed)
-
-
 num_actions = 4
 
 
 def create_q_model():
     # Network defined by the Deepmind paper
-    inputs = layers.Input(shape=(84, 84, 4,))
+    inputs = layers.Input(shape=(84, 84, 4,)) #31,1, 2 # 84, 84, 4,
 
     # Convolutions on the frames on the screen
     layer1 = layers.Conv2D(32, 8, strides=4, activation="relu")(inputs)
@@ -82,7 +75,9 @@ update_target_network = 10000
 loss_function = keras.losses.Huber()
 
 while True:  # Run until solved
-    state = np.array(env.reset())
+    #state = np.array(env.reset())
+    state=[[25,25]] # start point
+    state = np.reshape(state, [1, 2])
     episode_reward = 0
 
     for timestep in range(1, max_steps_per_episode):
@@ -108,8 +103,20 @@ while True:  # Run until solved
         epsilon = max(epsilon, epsilon_min)
 
         # Apply the sampled action in our environment
-        state_next, reward, done, _ = env.step(action)
-        state_next = np.array(state_next)
+        #state_next, reward, done, _ = env.step(action)
+        data_from_env = env.camera(action, state)
+
+        state_next = [data_from_env[2], data_from_env[3]]
+
+
+        
+        state_next = np.reshape(state_next, [1, 2])
+        done =  data_from_env[1]
+        reward = data_from_env[0]
+
+
+        
+        #state_next = np.array(state_next)
 
         episode_reward += reward
 
