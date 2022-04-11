@@ -43,8 +43,10 @@ class DQNAgent:
     def replay(self, batch_size):
         minibatch = random.sample(self.memory, batch_size)
         for state, action, reward, next_state, done in minibatch:
+            print ("reward", reward)
             target = reward
             if not done:
+                
              target = (reward + self.gamma *np.amax(self.model.predict(next_state)[0]))
             # начение Q для определенной пары состояние-действие должно быть наградой,
             # полученной при переходе в новое состояние (путем выполнения этого действия), добавленной к значению наилучшего действия в следующем состоянии.
@@ -68,7 +70,7 @@ if __name__ == "__main__":
     agent = DQNAgent(state_size, action_size) 
     # agent.load("./save/cartpole-dqn.h5")
     done = False
-    batch_size = 128 # 32 #128
+    batch_size = 1 # 32 #128
 
     for e in range(EPISODES):
         state=[[25,25]] # start point
@@ -80,7 +82,7 @@ if __name__ == "__main__":
             next_state = [data_from_env[2], data_from_env[3]]  # x and y coordinate
             next_state = np.reshape(next_state, [1, 2])
             done =  data_from_env[1]            
-            reward = reward if not done else -10
+            #reward = reward if not done else -10
             next_state = np.reshape(next_state, [1, 2])
             agent.memorize(state, action, reward, next_state, done)
 
@@ -88,7 +90,7 @@ if __name__ == "__main__":
             if done==0:
                 #print("episode: {}/{}, score: {}, e: {:.2}".format(e, EPISODES, time, agent.epsilon))
                 break
-            if len(agent.memory) > 900: #batch_size
+            if len(agent.memory) > 100: #batch_size
                 #print ("problem")
                 agent.replay(batch_size)
         # if e % 10 == 0:
