@@ -53,21 +53,26 @@ def camera (steps, state): # steps - комманда на действие, sta
  distance_before = (x_task -  test_x)**2+(y_task-test_y)**2 
  distance_before = math.sqrt(distance_before)
 
- distance = abs(distance_before-distance_after)
+ #distance = abs(distance_before-distance_after)
  reward = reward_x+reward_y
 
- if distance_after<distance_before:
-  reward=1
+ #print ("distance_after",distance_after)
+ #print ("distance_before",distance_before)
+ #print ("reward", reward)
+ if abs(distance_after)<abs(distance_before):
+  try:
+   reward=1/distance_after
+  except ZeroDivisionError:
+   reward = 1
  else:
   reward=0
 
- if x_laser_after==x_task & y_laser_after==y_task:
-  reward=2   
- 
-# try:
-#  reward= 100/distance
-# except ZeroDivisionError:
-#  reward = 100
+ #if x_laser_after==x_task & y_laser_after==y_task:
+ # reward=1  
+ # condition=0
+ # try:
+
+
   
  cv2.circle(frame,(x_task, y_task), 5, (250,0,255), -1)
  cv2.circle(frame,(x_laser_after, y_laser_after), 5, (0,0,255), -1)
