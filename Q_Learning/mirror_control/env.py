@@ -48,12 +48,29 @@ def camera (steps, state): # steps - комманда на действие, sta
  #else:           
  # reward=0   
  #calculate distance  - думал ввести коээфициент для того чтобы увеличить награду если становимся ближе к цели
- distance = (x_task -  x_laser_after)**2+(y_task-y_laser_after)**2 
- distance = math.sqrt(distance)
+ distance_after = (x_task -  x_laser_after)**2+(y_task-y_laser_after)**2 
+ distance_after = math.sqrt(distance_after)
  #print ("distance", distance)
 
- reward = reward_x+reward_y 
- #reward=(reward/distance)
+ distance_before = (x_task -  test_x)**2+(y_task-test_y)**2 
+ distance_before = math.sqrt(distance_before)
+
+ distance = abs(distance_before-distance_after)
+ reward = reward_x+reward_y
+
+ if distance_after<distance_before:
+  reward=1
+ else:
+  reward=0
+
+ if x_laser_after==x_task & y_laser_after==y_task:
+  reward=2   
+ 
+# try:
+#  reward= 100/distance
+# except ZeroDivisionError:
+#  reward = 100
+  
  cv2.circle(frame,(x_task, y_task), 5, (250,0,255), -1)
  cv2.circle(frame,(x_laser_after, y_laser_after), 5, (0,0,255), -1)
  cv2.imshow("Frame", frame)
