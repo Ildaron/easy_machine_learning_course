@@ -54,18 +54,19 @@ def camera (steps, state): # steps - комманда на действие, sta
  distance_before = math.sqrt(distance_before)
 
  #distance = abs(distance_before-distance_after)
- reward = reward_x+reward_y
+
+ #reward = reward_x+reward_y
 
  #print ("distance_after",distance_after)
  #print ("distance_before",distance_before)
  #print ("reward", reward)
  if abs(distance_after)<abs(distance_before):
   try:
-   reward=1/distance_after # 141.42*(1/141.42)
+   reward= 142.42*(1/distance_after) # 141.42*(1/141.42)
   except ZeroDivisionError:
-   reward = 1 # 141.2
+   reward = 2 # 141.2
  else:
-  reward=0
+  reward=-2
 
  #if x_laser_after==x_task & y_laser_after==y_task:
  # reward=1  
