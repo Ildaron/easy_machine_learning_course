@@ -1,8 +1,24 @@
+#from baselines.common.atari_wrappers import make_atari, wrap_deepmind
 import env
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
+
+
+
+
+import random
+import gym
+import numpy as np
+from collections import deque
+from keras.models import Sequential
+from keras.layers import Dense
+from tensorflow.keras.optimizers import Adam
+import env
+
+
+
 
 # Configuration paramaters for the whole setup
 seed = 42
@@ -10,30 +26,31 @@ gamma = 0.99  # Discount factor for past rewards
 epsilon = 1.0  # Epsilon greedy parameter
 epsilon_min = 0.1  # Minimum epsilon greedy parameter
 epsilon_max = 1.0  # Maximum epsilon greedy parameter
-epsilon_interval = (
-    epsilon_max - epsilon_min
-)  # Rate at which to reduce chance of random action being taken
+epsilon_interval = (epsilon_max - epsilon_min)  # Rate at which to reduce chance of random action being taken
 batch_size = 32  # Size of batch taken from replay buffer
 max_steps_per_episode = 10000
+
+# Use the Baseline Atari environment because of Deepmind helper functions
+#env = make_atari("BreakoutNoFrameskip-v4")
+# Warp the frames, grey scale, stake four frame and scale to smaller ratio
+
+#env = wrap_deepmind(env, frame_stack=True, scale=True)
+#env.seed(seed)
+
 
 num_actions = 4
 
 
 def create_q_model():
-    # Network defined by the Deepmind paper
-    inputs = layers.Input(shape=(84, 84, 4,)) #31,1, 2 # 84, 84, 4,
+ model = Sequential()
+ model.add(Dense(24, input_dim=32, activation='relu'))
+        #model.add(Dense(4, activation='relu'))
+        #model.add(Dense(self.action_size, activation='linear'))
+        #model.compile(loss='mse',optimizer=Adam(lr=self.learning_rate))
+ model.add(Dense(4, activation='softmax'))        
+ model.compile(optimizer='adam',loss='categorical_crossentropy')
 
-    # Convolutions on the frames on the screen
-    layer1 = layers.Conv2D(32, 8, strides=4, activation="relu")(inputs)
-    layer2 = layers.Conv2D(64, 4, strides=2, activation="relu")(layer1)
-    layer3 = layers.Conv2D(64, 3, strides=1, activation="relu")(layer2)
-
-    layer4 = layers.Flatten()(layer3)
-
-    layer5 = layers.Dense(512, activation="relu")(layer4)
-    action = layers.Dense(num_actions, activation="linear")(layer5)
-
-    return keras.Model(inputs=inputs, outputs=action)
+ return model#(input, outputs=action)
 
 
 # The first model makes the predictions for Q-values which are used to
