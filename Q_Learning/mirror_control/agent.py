@@ -7,13 +7,13 @@ from keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
 import env
 
-EPISODES = 5000
+EPISODES = 500
 
 class DQNAgent:
     def __init__(self, state_size, action_size):
         self.state_size = state_size
         self.action_size = action_size
-        self.memory = deque(maxlen=50001) #2000
+        self.memory = deque(maxlen=5001) #2000
         self.gamma = 0.95                #discount rate
         self.epsilon = 1.0               #exploration rate
         self.epsilon_min = 0.01
@@ -28,7 +28,7 @@ class DQNAgent:
         #model.add(Dense(self.action_size, activation='linear'))
         #model.compile(loss='mse',optimizer=Adam(lr=self.learning_rate))
         model.add(Dense(4, activation='softmax'))        
-        model.compile(optimizer='adam',loss='categorical_crossentropy')
+        model.compile(optimizer='adam',loss='mse')
         return model
 
     def memorize(self, state, action, reward, next_state, done):
@@ -70,7 +70,7 @@ if __name__ == "__main__":
     agent = DQNAgent(state_size, action_size) 
     # agent.load("./save/cartpole-dqn.h5")
     done = False
-    batch_size = 2048 # 32 #128
+    batch_size = 128 #2048 # 32 #128
 
     for e in range(EPISODES):
         state=[[85,85]] # start point
@@ -90,8 +90,6 @@ if __name__ == "__main__":
             if done==0:
                 #print("episode: {}/{}, score: {}, e: {:.2}".format(e, EPISODES, time, agent.epsilon))
                 break
-            if len(agent.memory) > 50000: #batch_size
+            if len(agent.memory) > 5000: #batch_size
                 #print ("problem")
                 agent.replay(batch_size)
-        # if e % 10 == 0:
-        #     agent.save("./save/cartpole-dqn.h5")
