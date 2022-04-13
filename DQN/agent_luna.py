@@ -34,7 +34,7 @@ def masked_huber_loss(mask_value, clip_delta):
   f.__name__ = 'masked_huber_loss'
   return f
 
-input_shape = (3,) # 9 #8 variables in the environment + the fraction finished we add ourselves
+input_shape = input_shape = (3,)#2 # 9 #8 variables in the environment + the fraction finished we add ourselves
 outputs = 4
 
 def create_model(learning_rate, regularization_factor):
@@ -54,9 +54,11 @@ def create_model(learning_rate, regularization_factor):
 
 def get_q_values(model, state):
   input = state[np.newaxis, ...]
+  print ("ok1")
   return model.predict(input)[0]
 
 def get_multiple_q_values(model, states):
+  print("ok2")  
   return model.predict(states)
 
 
@@ -137,8 +139,9 @@ def calculate_target_values(model, target_model, state_transitions, discount_fac
   return np.array(targets)
 
 def train_model(model, states, targets):
+  print ("ok3")  
   model.fit(states, targets, epochs=1, batch_size=len(targets), verbose=0)
-
+  print("ok4")
 
 def copy_model(model):
   backup_file = 'backup_'+str(uuid.uuid4())
@@ -215,19 +218,23 @@ step_count = 0
 average_reward_tracker = AverageRewardTracker(100)
 file_logger = FileLogger()
 
+
 for episode in range(max_episodes):
   print(f"Starting episode {episode} with epsilon {epsilon}")
 
   episode_reward = 0
   #state = env.reset()
-  state=[[25,25]] # start point
-  state = np.reshape(state, [1, 2])
+  #state=[[25,25]] # start point
 
+  state=[[25,25]] 
+  state = np.reshape(state, [1, 2])
+  
   
   fraction_finished = 0.0
   state = np.append(state, fraction_finished)
 
   first_q_values = get_q_values(model, state)
+  
   print(f"Q values: {first_q_values}")
   print(f"Max Q: {max(first_q_values)}")
 
@@ -236,16 +243,16 @@ for episode in range(max_episodes):
     q_values = get_q_values(model, state)
     action = select_action_epsilon_greedy(q_values, epsilon)
     #print ("action" action)
-    print ("state", state)
+    #print ("state", state)
     data_from_env = env.camera(action, state)
 
     reward = data_from_env[0]
-    new_state = [data_from_env[2], data_from_env[3]]  # x and y coordinate
-    new_state = np.reshape(new_state, [1, 2])
+    new_state = [data_from_env[2], data_from_env[3],fraction_finished]  # x and y coordinate
+    new_state = np.reshape(new_state, [1, 3])
     done =  data_from_env[1]            
     
     fraction_finished = (step + 1) / max_steps
-    new_state = np.append(new_state, fraction_finished)
+    #new_state = np.append(new_state, fraction_finished)
     
     episode_reward += reward
 
@@ -266,8 +273,9 @@ for episode in range(max_episodes):
       batch = replay_buffer.get_batch(batch_size=training_batch_size)
       targets = calculate_target_values(model, target_model, batch, discount_factor)
       states = np.array([state_transition.old_state for state_transition in batch])
+      print ("ok5")
       train_model(model, states, targets)
-
+      pritn ("ok6")  
     if done:
       break
 
