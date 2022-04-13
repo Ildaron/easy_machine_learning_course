@@ -271,7 +271,9 @@ for episode in range(max_episodes):
 
     if replay_buffer.length() >= training_start and step_count % train_every_x_steps == 0:
       batch = replay_buffer.get_batch(batch_size=training_batch_size)
-      targets = calculate_target_values(model, target_model, batch, discount_factor)
+      print ("error")
+      targets = calculate_target_values(model, target_model, batch, discount_factor) # error
+      print ("error2")  
       states = np.array([state_transition.old_state for state_transition in batch])
       print ("ok5")
       train_model(model, states, targets)
