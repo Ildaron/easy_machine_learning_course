@@ -28,7 +28,7 @@ class DQNAgent:
         #model.add(Dense(self.action_size, activation='linear'))
         #model.compile(loss='mse',optimizer=Adam(lr=self.learning_rate))
         model.add(Dense(4, activation='softmax'))        
-        model.compile(optimizer='adam',loss='mse')
+        model.compile(optimizer='adam',loss='mse') #loss=tensorflow.keras.losses.Huber(delta=1.5)
         return model
 
     def memorize(self, state, action, reward, next_state, done):
