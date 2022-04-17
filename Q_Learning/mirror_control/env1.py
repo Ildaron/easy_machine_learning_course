@@ -18,7 +18,7 @@ def camera (steps, state): # steps - комманда на действие, sta
  global one_time
  frame=cv2.imread("img.bmp") # для примера
  frame=cv2.resize(frame,(200,200))
-
+ print ("steprs", steps)
  if (steps == 0):   
   y_laser_after = test_y + 1
   x_laser_after = test_x 
@@ -33,15 +33,6 @@ def camera (steps, state): # steps - комманда на действие, sta
   x_laser_after = test_x - 1 #x_laser = x_before -50 
 
   
- if ((abs(x_task - x_laser_after) < abs(x_task - test_x))):
-  reward_x = 1
- else:
-  reward_x = 0
- if ((abs(y_task-y_laser_after) < abs(y_task - test_y))):
-  reward_y = 1
- else:
-  reward_y = 0
-
 
  #else:           
  # reward=0   
@@ -57,19 +48,23 @@ def camera (steps, state): # steps - комманда на действие, sta
 
  #reward = reward_x+reward_y
 
- #print ("distance_after",distance_after)
+ print ("distance_after",distance_after)
  #print ("distance_before",distance_before)
  #print ("reward", reward)
  if abs(distance_after)<abs(distance_before):
-  try:
-   reward= 142.42*(1/distance_after) # 141.42*(1/141.42)
-   reward = reward - 4
-  except ZeroDivisionError:
-   reward = 20 # 141.2
+  #try:
+  if distance_after >= 10:
+   reward= 141.42/distance_after # 141.42*(1/141.42)
+   #reward = reward - 4
+  #except ZeroDivisionError:
+  else:
+   reward = 200 # 141.2
+   condition=0
  else:
-   reward= 142.42*(1/distance_after) # 141.42*(1/141.42)
-   reward = reward - 4
+   reward= -distance_after/10 # 141.42*(1/141.42)
+ rewar=int(reward)
  print (reward)
+ 
  #if x_laser_after==x_task & y_laser_after==y_task:
  # reward=1  
  # condition=0
@@ -90,7 +85,9 @@ def camera (steps, state): # steps - комманда на действие, sta
   print ("stop game")
   y_laser_after = 0
   x_laser_after = 0
-  reward=0
+  reward=-100
  else:
-  condition=1 
+  condition=1
+ if reward==200:
+  condition=0   
  return (reward, condition, x_laser_after, y_laser_after)
