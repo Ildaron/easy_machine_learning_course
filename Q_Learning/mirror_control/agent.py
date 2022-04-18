@@ -13,9 +13,9 @@ class DQNAgent:
     def __init__(self, state_size, action_size):
         self.state_size = state_size
         self.action_size = action_size
-        self.memory = deque(maxlen=5001) #2000
+        self.memory = deque(maxlen=2501) #2000
         self.gamma = 0.95                #discount rate
-        self.epsilon = 1.0               #exploration rate
+        self.epsilon = 0.9   #1.0            #exploration rate
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.995
         self.learning_rate = 0.001
@@ -37,6 +37,7 @@ class DQNAgent:
     def act(self, state):
         if np.random.rand() <= self.epsilon: 
             return random.randrange(self.action_size)
+        print ("worksdss") 
         act_values = self.model.predict(state)
         return np.argmax(act_values[0])  
 
@@ -73,9 +74,9 @@ if __name__ == "__main__":
     batch_size = 128 #2048 # 32 #128
 
     for e in range(EPISODES):
-        state=[[85,85]] # start point
+        state=[[25,25]] # start point
         state = np.reshape(state, [1, 2])
-        for time in range(5000): 
+        for time in range(500): 
             action = agent.act(state) 
             data_from_env = env.camera(action, state)
             reward = data_from_env[0]
@@ -90,6 +91,6 @@ if __name__ == "__main__":
             if done==0:
                 #print("episode: {}/{}, score: {}, e: {:.2}".format(e, EPISODES, time, agent.epsilon))
                 break
-            if len(agent.memory) > 5000: #batch_size
-                #print ("problem")
+            if len(agent.memory) > 2500: #batch_size
+                #print ("problem")-
                 agent.replay(batch_size)
