@@ -33,28 +33,21 @@ ax2.scatter(X_test[:,0][y_test == 0], X_test[:,1][y_test == 0], c='red', marker=
 ax2.scatter(X_test[:,0][y_test == 1], X_test[:,1][y_test == 1], c='green', marker = 'o', edgecolors = 'black', alpha = 0.6)
 ax2.set_title('Test', fontsize=20);
 
-plt.show()
+#plt.show()
 
 #Создадим класс MyDataset, который наследуется от класса torch.utils.data.Dataset.
 #Переопределим методы __len и __getitem, чтобы при вызове соответствующих методов мы получали объем выборки и пару значение-метка.
-class MyDataset(Dataset):
-  
+class MyDataset(Dataset):  
     def __init__(self, X, y):
         self.X = torch.Tensor(X)
         self.y = torch.from_numpy(y).float()
-
     def __len__(self):
-        return self.X.shape[0]
-  
+        return self.X.shape[0]  
     def __getitem__(self, index):
         return (self.X[index], self.y[index])
 
-
-
 import torch.nn as nn
-
 ReLU = nn.ReLU()
-
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
@@ -80,34 +73,7 @@ print(net)
 #Описание всех параметров находится внутри класса.
 
 class Trainer():
-    """
-    Parameters:
-        dataset: пользовательский класс, предобрабатывающий данные
-        loss_f: функция потерь
-        learning_rate: величина градиентного шага
-        epoch_amount: общее количество эпох
-        batch_size: размер одного бача
-        max_batches_per_epoch: максимальное количество бачей, 
-                               подаваемых в модель в одну эпоху
-        device: устройство для вычислений
-        early_stopping: количество эпох без улучшений до остановки обучения
-        optim: оптимизатор
-        scheduler: регулятор градиентного шага
-        permutate: перемешивание тренировочной выборки перед обучением
 
-    Attributes:
-        start_model: необученная модель
-        best_model: модель, после обучения
-        train_loss: средние значения функции потерь на тренировочных 
-                    данных в каждой эпохе
-        val_loss: средние значения функции потерь на валидационных 
-                  данных в каждой эпохе
-
-    Methods:
-        fit: обучение модели
-        predict: возвращает предсказание обученной моделью
-
-    """
     def __init__(self,  dataset, net, loss_f, learning_rate=1e-3, 
                 epoch_amount=10, batch_size=12, 
                 max_batches_per_epoch=None,
@@ -115,44 +81,39 @@ class Trainer():
                 optim=torch.optim.Adam, 
                 scheduler=None, permutate=True):
         
-        self.loss_f = loss_f
-        self.learning_rate = learning_rate
+        self.loss_f = loss_f                  #loss_f: функция потерь
+        self.learning_rate = learning_rate    #learning_rate: величина градиентного шага
         self.epoch_amount = epoch_amount
         self.batch_size = batch_size
         self.max_batches_per_epoch = max_batches_per_epoch
-        self.device = device
+        self.device = device                  #device: устройство для вычислений
         self.early_stopping = early_stopping
-        self.optim = optim
-        self.scheduler = scheduler
-        self.permutate = permutate
-        self.dataset = dataset
-        self.start_model = net
-        self.best_model = net
+        self.optim = optim                    #optim: оптимизатор
+        self.scheduler = scheduler            #scheduler: регулятор градиентного шага
+        self.permutate = permutate            #permutate: перемешивание тренировочной выборки перед обучением 
+        self.dataset = dataset                #dataset: пользовательский класс, предобрабатывающий данные
+        self.start_model = net                #Attributes start_model: необученная модель
+        self.best_model = net                 #Attributes best_model: модель, после обучения
+              
+        self.train_loss = []                  #Attributes: средние значения функции потерь на тренировочных  данных в каждой эпохе
+        self.val_loss = []                    #Attributesval_loss: средние значения функции потерь на валидационныхданных в каждой эпохе
 
-        self.train_loss = []
-        self.val_loss = []
-
-    def predict(self, X):
+    def predict(self, X):                     #возвращает предсказание обученной моделью 
         return self.best_model(X)
 
-    def fit(self, X_train, X_test, y_train, y_test):
-
-        Net = self.start_model
-            
-        device = torch.device(self.device)
-
+    def fit(self, X_train, X_test, y_train, y_test):  #обучение модели
+        Net = self.start_model                        #net = Net()
+        device = torch.device(self.device)            #device='cpu'
         Net.to(self.device)
-
-        optimizer = self.optim(Net.parameters(), lr=self.learning_rate)
-        
+        optimizer = self.optim(Net.parameters(), lr=self.learning_rate)        
         if self.scheduler is not None:
             scheduler = self.scheduler(optimizer)
-
         train = self.dataset(X_train, y_train)
+        # В этом состоянии будут работать различные методы регуляризации (батч-нормализация, дропаут и т.д).
+        # В нашем примере для простоты мы никаких методов регуляризации в нашу модель не добавили.
         val = self.dataset(X_test, y_test)  
-
-        train = DataLoader(train, batch_size=self.batch_size, shuffle=self.permutate) 
-        val = DataLoader(val, batch_size=self.batch_size, shuffle=False)
+        train = DataLoader(train, batch_size=self.batch_size, shuffle=self.permutate) # лассы torch.utils.data.DataLoader и torch.Tensor torch.utils.data.Dataset (от которого мы унаследовали класс MyDataset)
+        val = DataLoader(val, batch_size=self.batch_size, shuffle=False)              # служат для упрощения и ускорения загрузки данных и экономии памяти.    
 
         best_val_loss = float('inf') # Лучшее значение функции потерь на валидационной выборке
                                      # функции потерь на валидационной выборке
@@ -170,7 +131,8 @@ class Trainer():
                 if self.max_batches_per_epoch is not None:
                     if batch_n >= self.max_batches_per_epoch:
                         break
-                optimizer.zero_grad()
+                optimizer.zero_grad() #Далее обнуляем градиент у оптимизатора,
+                                      #т.к. в PyTorch по умолчанию градиент будет накапливаться после каждой итерации
 
                 batch_X = batch_X.to(self.device)
                 target = target.to(self.device)
@@ -186,7 +148,9 @@ class Trainer():
             mean_loss /= batch_n
             self.train_loss.append(mean_loss)
             print(f'Loss_train: {mean_loss}, {dt.datetime.now() - start} сек')
-
+                                      # мы считаем значении функции потерь на валидационной выборке.
+                                      # Для этого мы переводим модель в режим eval и отключаем расчет градиента.
+                                      # После этого делаем то же, что и при обучении, но без градиентного шага.
             Net.eval()
             mean_loss = 0
             batch_n = 0
@@ -232,10 +196,11 @@ params = {
     'optim': torch.optim.SGD,
 }
 
+                            # Теперь настало время опробовать класс на нашем датасете.
+                            # В качестве функции потерь выберем бинарную кросс-энтропию torch.nn.BCELoss,
+                            # А в качестве оптимизатора — стохастический градиентный спуск torch.optim.SGD.
 clf = Trainer(**params)
 clf.fit(X_train, X_test, y_train, y_test)
-
-
 
 def plot_loss(Loss_train, Loss_val):
     plt.figure(figsize=(12, 5))
@@ -273,6 +238,3 @@ ax2.scatter(X_test[:,0][y_test == 1], X_test[:,1][y_test == 1], c='green', marke
 ax2.set_title('Test', fontsize=20)
 plot_contours(ax2, xx1, xx2, alpha=0.2);
 plt.show()
-
-
-
