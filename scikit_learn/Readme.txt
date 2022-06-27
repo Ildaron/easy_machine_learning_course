@@ -1,1 +1,1 @@
-https://www.helenkapatsa.ru/mietod-ghlavnykh-komponient/
+PCA https://www.helenkapatsa.ru/mietod-ghlavnykh-komponient/
